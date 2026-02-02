@@ -421,8 +421,8 @@ const DashboardScreen = () => {
           entering={FadeInDown.springify()}
           style={tw`mb-6`}
         >
-          <Text style={tw`text-3xl font-bold text-gray-900 mb-1`}>Panel de Control</Text>
-          <Text style={tw`text-gray-600 text-base`}>
+          <Text style={tw`text-4xl font-extrabold text-gray-900 mb-2`}>Panel de Control</Text>
+          <Text style={tw`text-gray-600 text-lg`}>
             Vista general del sistema de monitoreo
           </Text>
         </Animated.View>
@@ -434,7 +434,7 @@ const DashboardScreen = () => {
             title="Alertas Pendientes"
             value={stats.alertasPendientes}
             color="#ef4444"
-            gradient={['#fee2e2', '#fecaca']}
+            gradient={['#fecaca', '#fca5a5']}
             onPress={() => navigation.navigate('AlertasScreen')}
             delay={0}
           />
@@ -443,7 +443,7 @@ const DashboardScreen = () => {
             title="Total Alertas"
             value={stats.totalAlertas}
             color="#3b82f6"
-            gradient={['#dbeafe', '#bfdbfe']}
+            gradient={['#bfdbfe', '#93c5fd']}
             delay={100}
           />
           <StatCard
@@ -451,7 +451,7 @@ const DashboardScreen = () => {
             title="En Monitoreo"
             value={stats.productosMonitoreados}
             color="#10b981"
-            gradient={['#d1fae5', '#a7f3d0']}
+            gradient={['#6ee7b7', '#34d399']}
             onPress={() => navigation.navigate('AgregarMonitoreoScreen')}
             delay={200}
           />
@@ -460,7 +460,7 @@ const DashboardScreen = () => {
             title="Total Productos"
             value={stats.totalProductos}
             color="#8b5cf6"
-            gradient={['#f3e8ff', '#e9d5ff']}
+            gradient={['#c4b5fd', '#a78bfa']}
             onPress={() => navigation.navigate('ProductosScreen')}
             delay={300}
           />

@@ -85,12 +85,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
   };
 
   return (
-    <View style={tw`bg-white rounded-xl shadow-md mb-4 overflow-hidden`}>
+    <View style={tw`bg-white/85 backdrop-blur-xl rounded-3xl shadow-xl border border-white/30 mb-4 overflow-hidden`}>
       <View style={tw`p-4`}>
         {/* Encabezado de la tarjeta */}
         <View style={tw`flex-row`}>
           {/* Imagen del producto */}
-          <View style={tw`w-20 h-20 bg-blue-50 rounded-lg overflow-hidden`}>
+          <View style={tw`w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl overflow-hidden shadow-md`}>
             {item.foto ? (
               <Image
                 source={{ uri: item.foto }}
@@ -103,44 +103,44 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
               </View>
             )}
           </View>
-          
+
           {/* Información principal */}
-          <View style={tw`flex-1 ml- 4`}>
-            <Text style={tw`text-lg font-bold text-gray-800`}>{item.nombre}</Text>
-            <Text style={tw`text-sm text-gray-600 mb-1`}>Fórmula: {item.formula}</Text>
+          <View style={tw`flex-1 ml-4`}>
+            <Text style={tw`text-xl font-bold text-gray-900`}>{item.nombre}</Text>
+            <Text style={tw`text-base text-gray-600 mb-1.5`}>Fórmula: {item.formula}</Text>
             <View style={tw`flex-row items-center`}>
-              <View style={tw`bg-blue-100 px-2 py-1 rounded-full mr-2`}>
-                <Text style={tw`text-xs text-blue-700`}>{item.concentracion}</Text>
+              <View style={tw`bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 rounded-full mr-2`}>
+                <Text style={tw`text-xs text-blue-700 font-semibold`}>{item.concentracion}</Text>
               </View>
-              <View style={tw`bg-purple-100 px-2 py-1 rounded-full`}>
-                <Text style={tw`text-xs text-purple-700`}>{item.formafarmaceutica}</Text>
+              <View style={tw`bg-gradient-to-r from-purple-100 to-purple-50 px-3 py-1.5 rounded-full`}>
+                <Text style={tw`text-xs text-purple-700 font-semibold`}>{item.formafarmaceutica}</Text>
               </View>
             </View>
           </View>
         </View>
-        
+
         {/* Condiciones de almacenamiento */}
-        <View style={tw`mt-3 bg-amber-50 p-3 rounded-lg`}>
-          <Text style={tw`text-xs font-medium text-amber-800`}>Condiciones de almacenamiento:</Text>
-          <Text style={tw`text-xs text-amber-700 mt-1`}>{item.condicion}</Text>
+        <View style={tw`mt-3 bg-gradient-to-r from-amber-50 to-orange-50 p-3 rounded-xl border border-amber-100`}>
+          <Text style={tw`text-sm font-semibold text-amber-800`}>Condiciones de almacenamiento:</Text>
+          <Text style={tw`text-sm text-amber-700 mt-1`}>{item.condicion}</Text>
         </View>
-        
+
         {/* Secciones expandibles */}
         <View style={tw`mt-2`}>
-          <ExpandableDetails 
-            title="Indicaciones" 
+          <ExpandableDetails
+            title="Indicaciones"
             content={item.indicaciones}
             isOpen={expandedSection === 'indicaciones'}
             onToggle={() => toggleSection('indicaciones')}
           />
-          <ExpandableDetails 
-            title="Contraindicaciones" 
+          <ExpandableDetails
+            title="Contraindicaciones"
             content={item.contraindicaciones}
             isOpen={expandedSection === 'contraindicaciones'}
             onToggle={() => toggleSection('contraindicaciones')}
           />
-          <ExpandableDetails 
-            title="Efectos secundarios" 
+          <ExpandableDetails
+            title="Efectos secundarios"
             content={item.efectos_secundarios}
             isOpen={expandedSection === 'efectos'}
             onToggle={() => toggleSection('efectos')}

@@ -10,6 +10,7 @@ export type RootStackParamList = {
   AgregarMonitoreoScreen: undefined;
   ConsultarMetricas: undefined;
   RegistrosScreen: undefined;
+  HistoricoMonitoreo: { productoId?: number; productoNombre?: string };
 };
 
 declare global {

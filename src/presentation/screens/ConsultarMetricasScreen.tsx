@@ -106,7 +106,7 @@ const metricConfig: Record<
     bg: '#ffedd5',
     text: '#ea580c',
     chart: '#f97316',
-    gradient: ['#fff7ed', '#ffedd5'],
+    gradient: ['#fed7aa', '#fdba74'],
     icon: Thermometer,
     unit: '°C',
     label: 'Temperatura',
@@ -115,7 +115,7 @@ const metricConfig: Record<
     bg: '#dbeafe',
     text: '#2563eb',
     chart: '#3b82f6',
-    gradient: ['#eff6ff', '#dbeafe'],
+    gradient: ['#bfdbfe', '#93c5fd'],
     icon: Droplet,
     unit: '%',
     label: 'Humedad',
@@ -124,7 +124,7 @@ const metricConfig: Record<
     bg: '#fef9c3',
     text: '#ca8a04',
     chart: '#eab308',
-    gradient: ['#fefce8', '#fef9c3'],
+    gradient: ['#fde047', '#facc15'],
     icon: Sun,
     unit: 'lux',
     label: 'Luz',
@@ -133,7 +133,7 @@ const metricConfig: Record<
     bg: '#f3e8ff',
     text: '#7c3aed',
     chart: '#8b5cf6',
-    gradient: ['#faf5ff', '#f3e8ff'],
+    gradient: ['#ddd6fe', '#c4b5fd'],
     icon: AlertTriangle,
     unit: 'hPa',
     label: 'Presión',
@@ -305,7 +305,7 @@ const ConsultarMetricasScreen = () => {
           <Animated.View style={animatedStyle}>
             <View
               style={[
-                tw`rounded-xl shadow-md overflow-hidden bg-white`,
+                tw`rounded-2xl shadow-lg overflow-hidden`,
                 selectedMetric === metric && tw`ring-2 ring-blue-500`,
                 isOutOfRange && tw`ring-2 ring-red-500`,
               ]}
@@ -314,35 +314,35 @@ const ConsultarMetricasScreen = () => {
                 colors={config.gradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={tw`p-3`}
+                style={tw`p-4`}
               >
                 <View style={tw`flex-row items-center justify-between mb-2`}>
                   <View style={tw`flex-row items-center`}>
-                    <View style={[tw`p-1.5 rounded-lg`, { backgroundColor: config.bg }]}>
-                      <Icon width={16} height={16} stroke={config.text} strokeWidth={2} />
+                    <View style={[tw`p-2 rounded-xl bg-white/30 shadow-sm`]}>
+                      <Icon width={18} height={18} stroke={config.text} strokeWidth={2.5} />
                     </View>
-                    <Text style={tw`ml-2 font-bold text-gray-800 text-sm`}>
+                    <Text style={tw`ml-2 font-bold text-gray-900 text-base`}>
                       {config.label}
                     </Text>
                   </View>
                   {isOutOfRange && (
-                    <View style={tw`bg-red-500 px-2 py-0.5 rounded-full`}>
-                      <Text style={tw`text-white text-[10px] font-bold`}>!</Text>
+                    <View style={tw`bg-red-500 px-2.5 py-1 rounded-full shadow-md`}>
+                      <Text style={tw`text-white text-xs font-bold`}>!</Text>
                     </View>
                   )}
                 </View>
 
                 <View style={tw`flex-row items-baseline mb-2`}>
-                  <Text style={tw`text-2xl font-bold text-gray-900`}>
+                  <Text style={tw`text-3xl font-extrabold text-gray-900`}>
                     {currentValue?.toFixed(1) || '0.0'}
                   </Text>
-                  <Text style={tw`text-gray-600 ml-1 text-sm`}>{config.unit}</Text>
+                  <Text style={tw`text-gray-700 ml-1.5 text-base font-semibold`}>{config.unit}</Text>
                 </View>
 
-                <View style={tw`w-full bg-white/50 rounded-full h-1.5 mb-2`}>
+                <View style={tw`w-full bg-white/50 rounded-full h-2 mb-2`}>
                   <View
                     style={[
-                      tw`h-1.5 rounded-full`,
+                      tw`h-2 rounded-full shadow-sm`,
                       { width: `${progress}%`, backgroundColor: config.chart },
                     ]}
                   />

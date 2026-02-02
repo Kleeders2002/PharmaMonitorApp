@@ -35,6 +35,7 @@ import {
   List,
   X,
   Home,
+  TrendingUp,
 } from 'react-native-feather';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -127,6 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       subItems: [
         { icon: Plus, label: 'Agregar Monitoreo', screen: 'AgregarMonitoreoScreen' },
         { icon: PieChart, label: 'Consultar Métricas', screen: 'ConsultarMetricas' },
+        { icon: TrendingUp, label: 'Histórico', screen: 'HistoricoMonitoreo' },
       ],
     },
     { icon: AlertTriangle, label: 'Alertas', screen: 'AlertasScreen' },
@@ -156,21 +158,21 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Header with Gradient */}
         <Animated2.View entering={ZoomIn.springify()} style={tw`p-6 mb-4`}>
           <LinearGradient
-            colors={['#3b82f6', '#2563eb']}
+            colors={['#3b82f6', '#8b5cf6', '#06b6d4']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={tw`rounded-3xl p-6 shadow-xl`}
           >
-            <View style={tw`flex-row items-center mb-4`}>
+            <View style={tw`flex-row items-center mb-3`}>
               {userData.foto ? (
                 <Image
                   source={{ uri: userData.foto }}
-                  style={tw`w-20 h-20 rounded-2xl border-2 border-white shadow-lg`}
+                  style={tw`w-20 h-20 rounded-2xl border-2 border-white/80 shadow-lg`}
                   resizeMode="cover"
                 />
               ) : (
                 <View
-                  style={tw`w-20 h-20 rounded-2xl bg-white/20 items-center justify-center border-2 border-white shadow-lg`}
+                  style={tw`w-20 h-20 rounded-2xl bg-white/20 items-center justify-center border-2 border-white/80 shadow-lg`}
                 >
                   <User stroke="#ffffff" width={36} height={36} strokeWidth={2} />
                 </View>
@@ -178,13 +180,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               <View style={tw`ml-4 flex-1`}>
                 <Text
-                  style={tw`text-xl font-bold text-white mb-1`}
+                  style={tw`text-xl font-bold text-white mb-1.5`}
                   numberOfLines={1}
                 >
                   {userData.nombre} {userData.apellido}
                 </Text>
-                <View style={tw`bg-white/20 self-start px-3 py-1 rounded-full`}>
-                  <Text style={tw`text-sm text-white font-medium`}>
+                <View style={tw`bg-white/25 self-start px-3 py-1.5 rounded-full backdrop-blur-sm`}>
+                  <Text style={tw`text-sm text-white font-semibold`}>
                     {userData.rol}
                   </Text>
                 </View>
@@ -207,7 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   style={[
                     tw`flex-row items-center py-3.5 px-4 rounded-2xl mb-2`,
                     isActive
-                      ? tw`bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg`
+                      ? tw`bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 shadow-lg`
                       : tw`bg-gray-50`,
                   ]}
                   onPress={() => {
@@ -224,11 +226,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     stroke={isActive ? '#ffffff' : '#374151'}
                     width={22}
                     height={22}
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                   />
                   <Text
                     style={[
-                      tw`flex-1 ml-3 font-semibold`,
+                      tw`flex-1 ml-3 font-semibold text-base`,
                       isActive ? tw`text-white` : tw`text-gray-700`,
                     ]}
                   >
@@ -247,9 +249,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <TouchableOpacity
                         key={`sub-${subIndex}`}
                         style={[
-                          tw`flex-row items-center py-2 px-4 rounded-2xl mb-2 ml-4`,
+                          tw`flex-row items-center py-2.5 px-4 rounded-xl mb-2 ml-4`,
                           isCurrentRoute(subItem.screen)
-                            ? tw`bg-blue-50`
+                            ? tw`bg-gradient-to-r from-blue-50 to-purple-50`
                             : tw`bg-gray-100`,
                         ]}
                         onPress={() => {
@@ -261,13 +263,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                           stroke={isCurrentRoute(subItem.screen) ? '#3b82f6' : '#6b7280'}
                           width={18}
                           height={18}
-                          strokeWidth={2}
+                          strokeWidth={2.5}
                         />
                         <Text
                           style={[
-                            tw`ml-3 text-sm`,
+                            tw`ml-3 text-sm font-medium`,
                             isCurrentRoute(subItem.screen)
-                              ? tw`text-blue-600 font-medium`
+                              ? tw`text-blue-700`
                               : tw`text-gray-600`,
                           ]}
                         >

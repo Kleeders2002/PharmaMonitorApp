@@ -405,14 +405,14 @@ interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   style,
-  blurAmount = 10,
-  intensity = 0.5,
+  blurAmount = 20,
+  intensity = 0.85,
 }) => {
   return (
     <Animated.View
       entering={FadeInUp.springify().mass(0.8)}
       style={[
-        tw`bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white/20`,
+        tw`bg-white/85 backdrop-blur-xl rounded-3xl shadow-xl border border-white/30`,
         style,
       ]}
     >

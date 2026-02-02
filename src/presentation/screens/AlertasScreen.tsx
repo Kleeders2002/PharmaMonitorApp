@@ -79,12 +79,12 @@ const AlertCard: React.FC<AlertCardProps> = ({ alerta, producto }) => {
   };
 
   return (
-    <View style={tw`bg-white rounded-xl shadow-md mb-4 overflow-hidden`}>
+    <View style={tw`bg-white/85 backdrop-blur-xl rounded-3xl shadow-xl border border-white/30 mb-4 overflow-hidden`}>
       <View style={tw`p-4`}>
         {/* Encabezado de la tarjeta */}
         <View style={tw`flex-row`}>
           {/* Imagen del producto */}
-          <View style={tw`w-20 h-20 bg-blue-50 rounded-lg overflow-hidden`}>
+          <View style={tw`w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl overflow-hidden shadow-md`}>
             {producto.foto_producto ? (
               <Image
                 source={{ uri: producto.foto_producto }}
@@ -97,53 +97,53 @@ const AlertCard: React.FC<AlertCardProps> = ({ alerta, producto }) => {
               </View>
             )}
           </View>
-          
+
           {/* Información principal */}
           <View style={tw`flex-1 ml-4`}>
-            <Text style={tw`text-lg font-bold text-gray-800`}>{producto.nombre_producto}</Text>
-            
-            <View style={tw`flex-row items-center mt-1`}>
+            <Text style={tw`text-xl font-bold text-gray-900`}>{producto.nombre_producto}</Text>
+
+            <View style={tw`flex-row items-center mt-1.5`}>
               <View style={tw`flex-row items-center`}>
-                <MapPin stroke="#6b7280" width={14} height={14} style={tw`mr-1`} />
-                <Text style={tw`text-sm text-gray-600`}>{producto.localizacion}</Text>
+                <MapPin stroke="#6b7280" width={16} height={16} style={tw`mr-1`} />
+                <Text style={tw`text-base text-gray-700`}>{producto.localizacion}</Text>
               </View>
             </View>
-            
-            <View style={tw`flex-row items-center mt-1`}>
-              <Box stroke="#6b7280" width={14} height={14} style={tw`mr-1`} />
-              <Text style={tw`text-sm text-gray-600`}>{producto.cantidad} unidades</Text>
+
+            <View style={tw`flex-row items-center mt-1.5`}>
+              <Box stroke="#6b7280" width={16} height={16} style={tw`mr-1`} />
+              <Text style={tw`text-base text-gray-700`}>{producto.cantidad} unidades</Text>
             </View>
-            
+
             {/* Indicador de estado */}
-            <View style={tw`flex-row mt-2 items-center`}>
+            <View style={tw`flex-row mt-2.5 items-center`}>
               <View style={tw`
-                flex-row items-center px-2 py-1 rounded-full 
-                ${alerta.estado === 'pendiente' ? 'bg-red-100' : 'bg-green-100'}
+                flex-row items-center px-3 py-1.5 rounded-full
+                ${alerta.estado === 'pendiente' ? 'bg-red-100' : 'bg-emerald-100'}
               `}>
                 {alerta.estado === 'pendiente' ? (
-                  <AlertTriangle 
-                    stroke={alerta.estado === 'pendiente' ? '#ef4444' : '#22c55e'} 
-                    width={14} 
-                    height={14} 
-                    style={tw`mr-1`} 
+                  <AlertTriangle
+                    stroke={alerta.estado === 'pendiente' ? '#ef4444' : '#10b981'}
+                    width={16}
+                    height={16}
+                    style={tw`mr-1.5`}
                   />
                 ) : (
-                  <CheckCircle 
-                    stroke={alerta.estado === 'pendiente' ? '#ef4444' : '#22c55e'} 
-                    width={14} 
-                    height={14} 
-                    style={tw`mr-1`} 
+                  <CheckCircle
+                    stroke={alerta.estado === 'pendiente' ? '#ef4444' : '#10b981'}
+                    width={16}
+                    height={16}
+                    style={tw`mr-1.5`}
                   />
                 )}
-                <Text style={tw`text-xs font-medium ${alerta.estado === 'pendiente' ? 'text-red-800' : 'text-green-800'}`}>
+                <Text style={tw`text-sm font-semibold ${alerta.estado === 'pendiente' ? 'text-red-800' : 'text-emerald-800'}`}>
                   {alerta.estado.charAt(0).toUpperCase() + alerta.estado.slice(1)}
                 </Text>
               </View>
             </View>
           </View>
-          
+
           {/* Icono de parámetro */}
-          <View style={tw`p-3 rounded-lg bg-blue-50`}>
+          <View style={tw`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 shadow-md`}>
             {renderParametroIcon()}
           </View>
         </View>

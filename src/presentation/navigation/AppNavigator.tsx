@@ -11,6 +11,7 @@ import CondicionesScreen from '../screens/CondicionesScreen';
 import AgregarMonitoreoScreen from '../screens/AgregarMonitoreoScreen';
 import ConsultarMetricasScreen from '../screens/ConsultarMetricasScreen';
 import RegistrosScreen from '../screens/RegistrosScreen';
+import HistoricoMonitoreoScreen from '../screens/HistoricoMonitoreoScreen';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -36,7 +37,8 @@ const AppNavigator = () => {
         <Stack.Screen name="AlertasScreen" component={AlertasScreen} />
         <Stack.Screen name="AgregarMonitoreoScreen" component={AgregarMonitoreoScreen} />
         {/* <Stack.Screen name="Configuracion" component={ConfiguracionScreen} />   SERÁ */}
-        <Stack.Screen name="ConsultarMetricas" component={ConsultarMetricasScreen} /> 
+        <Stack.Screen name="ConsultarMetricas" component={ConsultarMetricasScreen} />
+        <Stack.Screen name="HistoricoMonitoreo" component={HistoricoMonitoreoScreen} /> 
       </Stack.Navigator>
     </NavigationContainer>
   );

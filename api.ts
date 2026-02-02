@@ -5,19 +5,10 @@ import { Alert, Platform } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 
 // Configuración inicial
-// En web usa localhost, en móvil usa la IP local de la red
+// Usar backend en producción para todas las plataformas
 const getBaseURL = () => {
-  const platform = Platform.OS;
-  console.log('🔍 Plataforma detectada:', platform);
-
-  if (platform === 'web') {
-    const url = 'http://localhost:8000';
-    console.log('✅ Usando URL para web:', url);
-    return url;
-  }
-
-  const url = 'http://192.168.0.155:8000';
-  console.log('📱 Usando URL para móvil:', url);
+  const url = 'https://pharmamonitorapi.onrender.com';
+  console.log('🚀 Usando backend en producción:', url);
   return url;
 };
 

@@ -1,6 +1,7 @@
 // src/presentation/layouts/MainLayout.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { View, PanResponder, ActivityIndicator, TouchableOpacity, Text, Animated } from 'react-native';
+import { View, PanResponder, ActivityIndicator, TouchableOpacity, Text, Animated, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
 import Header from '../components/Header';
@@ -328,46 +329,53 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   }
 
   return (
-    <View 
-      style={tw`flex-1 bg-gray-50`}
-      {...panResponder.panHandlers}
+    <LinearGradient
+      colors={['#f8fafc', '#eff6ff', '#ecfeff']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={tw`flex-1`}
     >
-      {/* Overlay para sidebar */}
-      {isSidebarOpen && (
-        <TouchableOpacity
-          style={tw`absolute inset-0 bg-black/20 z-40`}
-          activeOpacity={1}
-          onPress={closeSidebar}
+      <View
+        {...panResponder.panHandlers}
+        style={tw`flex-1`}
+      >
+        {/* Overlay para sidebar */}
+        {isSidebarOpen && (
+          <TouchableOpacity
+            style={tw`absolute inset-0 bg-black/20 z-40`}
+            activeOpacity={1}
+            onPress={closeSidebar}
+          />
+        )}
+
+        <Header
+          title={title}
+          alertCount={alertCount}
+          onMenuPress={openSidebar}
+          onAlertPress={handleAlertPress}
+          onProfilePress={openSidebar}
+          userData={userData}
         />
-      )}
 
-      <Header
-        title={title}
-        alertCount={alertCount}
-        onMenuPress={openSidebar}
-        onAlertPress={handleAlertPress}
-        onProfilePress={openSidebar}
-        userData={userData}
-      />
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={closeSidebar}
+          userData={userData}
+          sidebarTranslateX={sidebarTranslateX}
+        />
 
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={closeSidebar}
-        userData={userData}
-        sidebarTranslateX={sidebarTranslateX}
-      />
-      
-      <AlertNotifications
-        isOpen={isAlertsOpen}
-        onClose={() => setIsAlertsOpen(false)}
-        alertas={alertas}
-        productos={productos}
-      />
-      
-      <View style={tw`flex-1`}>
-        {children}
+        <AlertNotifications
+          isOpen={isAlertsOpen}
+          onClose={() => setIsAlertsOpen(false)}
+          alertas={alertas}
+          productos={productos}
+        />
+
+        <View style={tw`flex-1`}>
+          {children}
+        </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
