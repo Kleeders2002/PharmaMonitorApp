@@ -307,12 +307,7 @@ export const CardLift: React.FC<CardLiftProps> = ({
 
   return (
     <Animated.View style={[animatedStyle, style]}>
-      <Animated.View
-        onStart={handlePressIn}
-        onEnd={handlePressOut}
-      >
-        {children}
-      </Animated.View>
+      {children}
     </Animated.View>
   );
 };

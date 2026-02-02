@@ -35,6 +35,7 @@ import {
   TrendingUp,
   TrendingDown,
   Zap,
+  Activity,
 } from 'react-native-feather';
 import Animated, {
   useSharedValue,
