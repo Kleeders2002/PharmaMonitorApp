@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
 import {
   Calendar,
@@ -81,7 +82,7 @@ const HistoricoMonitoreoScreen = () => {
 
     try {
       setLoading(true);
-      const token = await localStorage.getItem('access_token');
+      const token = await AsyncStorage.getItem('access_token');
 
       const response = await api.get(
         `/productosmonitoreados/${selectedProducto}/historico`,

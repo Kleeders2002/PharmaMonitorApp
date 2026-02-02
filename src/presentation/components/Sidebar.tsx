@@ -136,7 +136,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const isCurrentRoute = (screen: string): boolean => {
-    const currentRoute = navigation.getState().routes[navigation.getState().index];
+    const state = navigation.getState();
+    const currentRoute = state.routes[state.index];
+    console.log('Current route:', currentRoute.name, 'Checking against:', screen);
     return currentRoute.name === screen;
   };
 
