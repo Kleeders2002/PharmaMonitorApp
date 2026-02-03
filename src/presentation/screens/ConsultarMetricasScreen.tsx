@@ -442,14 +442,14 @@ const ConsultarMetricasScreen = () => {
           </View>
 
           <TouchableOpacity
-            style={tw`mt-4 bg-gradient-to-r from-blue-500 to-blue-600 p-3.5 rounded-xl flex-row items-center justify-center shadow-lg`}
+            style={tw`mt-4 bg-gradient-to-r from-blue-100 to-blue-200 p-3.5 rounded-xl flex-row items-center justify-center shadow-lg border-2 border-blue-300`}
             onPress={() => {
               // @ts-ignore
               navigation.navigate('HistoricoMonitoreo', { productoId: product.id });
             }}
           >
-            <Clock width={18} height={18} stroke="#ffffff" strokeWidth={2} />
-            <Text style={tw`text-white font-bold ml-2`}>Ver Registro Completo</Text>
+            <Clock width={18} height={18} stroke="#1e40af" strokeWidth={2} />
+            <Text style={tw`text-blue-900 font-bold ml-2 text-base`}>Ver Registro Completo</Text>
           </TouchableOpacity>
         </GlassCard>
       </Animated.View>
@@ -732,13 +732,13 @@ const ConsultarMetricasScreen = () => {
                     <Text
                       style={tw.style(
                         `ml-2 font-bold text-base`,
-                        tabValue === 0 ? `text-gray-800` : `text-white`
+                        tabValue === 0 ? `text-blue-900 font-semibold` : `text-blue-900 font-semibold`
                       )}
                     >
                       Activos
                     </Text>
-                    <View style={tw`ml-2 bg-white/30 px-2 py-0.5 rounded-full`}>
-                      <Text style={tw`text-white text-xs font-bold`}>
+                    <View style={tw`ml-2 bg-white px-2.5 py-1 rounded-full shadow-sm`}>
+                      <Text style={tw`text-blue-900 text-xs font-bold`}>
                         {activeProducts.length}
                       </Text>
                     </View>
@@ -772,13 +772,13 @@ const ConsultarMetricasScreen = () => {
                     <Text
                       style={tw.style(
                         `ml-2 font-bold text-base`,
-                        tabValue === 1 ? `text-gray-800` : `text-white`
+                        tabValue === 1 ? `text-blue-900 font-semibold` : `text-blue-900 font-semibold`
                       )}
                     >
                       Históricos
                     </Text>
-                    <View style={tw`ml-2 bg-white/30 px-2 py-0.5 rounded-full`}>
-                      <Text style={tw`text-white text-xs font-bold`}>
+                    <View style={tw`ml-2 bg-white px-2.5 py-1 rounded-full shadow-sm`}>
+                      <Text style={tw`text-blue-900 text-xs font-bold`}>
                         {historicalProducts.length}
                       </Text>
                     </View>
@@ -792,14 +792,14 @@ const ConsultarMetricasScreen = () => {
               entering={FadeInUp.delay(200).springify()}
               style={tw`flex-row gap-3 mt-4`}
             >
-              <View style={tw`flex-1 bg-white/20 backdrop-blur-sm rounded-xl p-3`}>
+              <View style={tw`flex-1 bg-blue-100 backdrop-blur-sm rounded-xl p-3`}>
                 <View style={tw`flex-row items-center`}>
-                  <View style={tw`bg-white/30 p-2 rounded-lg`}>
-                    <Activity width={16} height={16} stroke="#ffffff" strokeWidth={2.5} />
+                  <View style={tw`bg-white p-2 rounded-lg`}>
+                    <Activity width={16} height={16} stroke="#1e40af" strokeWidth={2.5} />
                   </View>
                   <View style={tw`ml-2`}>
-                    <Text style={tw`text-white/70 text-xs`}>En Monitoreo</Text>
-                    <Text style={tw`text-white text-xl font-bold`}>{activeProducts.length}</Text>
+                    <Text style={tw`text-blue-800 text-xs font-semibold`}>En Monitoreo</Text>
+                    <Text style={tw`text-blue-900 text-xl font-bold`}>{activeProducts.length}</Text>
                   </View>
                 </View>
               </View>
