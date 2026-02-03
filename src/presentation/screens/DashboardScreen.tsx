@@ -160,7 +160,7 @@ const DashboardScreen = () => {
 
     return (
       <Animated.View entering={FadeInUp.delay(delay).springify()}>
-        <View style={width < 380 ? tw`w-full mb-3` : tw`w-[48%] mb-3`}>
+        <View style={tw`w-full mb-3`}>
           <Animated.View style={animatedStyle}>
             <GlassCard style={tw`p-5`}>
               <Pressable
@@ -431,7 +431,7 @@ const DashboardScreen = () => {
         </Animated.View>
 
         {/* Stats Section */}
-        <View style={tw`mb-6 flex-row flex-wrap justify-between`}>
+        <View style={tw`mb-6`}>
           <StatCard
             icon={AlertTriangle}
             title="Alertas Pendientes"
