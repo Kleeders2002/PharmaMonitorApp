@@ -164,13 +164,6 @@ const Header: React.FC<HeaderProps> = ({
               )}
             </AnimatedTouchableOpacity>
           </View>
-
-          {/* Title */}
-          <View style={tw`mt-1`}>
-            <Text style={tw`text-center text-xl font-bold text-white shadow-sm`}>
-              {title}
-            </Text>
-          </View>
         </View>
       </SafeAreaView>
     </LinearGradient>
