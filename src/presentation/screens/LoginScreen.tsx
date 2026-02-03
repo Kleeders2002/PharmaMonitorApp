@@ -203,7 +203,7 @@ const LoginScreen = () => {
               style={tw`h-56 justify-center items-center pb-8`}
             >
               <Image
-                source={require("../../../assets/logo.png")}
+                source={require("../../../assets/logoinverse.png")}
                 style={tw`w-28 h-28 mb-6`}
                 resizeMode="contain"
               />
@@ -219,7 +219,7 @@ const LoginScreen = () => {
               {Platform.OS !== "web" && (
                 <View style={tw`mb-6`}>
                   <Image
-                    source={require("../../../assets/logo.png")}
+                    source={require("../../../assets/logoinverse.png")}
                     style={tw`w-20 h-20`}
                     resizeMode="contain"
                   />

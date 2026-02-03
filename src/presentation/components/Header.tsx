@@ -126,13 +126,11 @@ const Header: React.FC<HeaderProps> = ({
 
             {/* Logo */}
             <View style={tw`flex-1 items-center`}>
-              <View style={tw`bg-white rounded-2xl p-2 shadow-lg`}>
-                <Image
-                  source={require('../../../assets/logoinverse.png')}
-                  style={tw`w-12 h-12`}
-                  resizeMode="contain"
-                />
-              </View>
+              <Image
+                source={require('../../../assets/logoinverse.png')}
+                style={tw`w-12 h-12`}
+                resizeMode="contain"
+              />
             </View>
 
             {/* Alert Bell with Animation */}
