@@ -256,7 +256,7 @@ const DashboardScreen = () => {
     );
   };
 
-  // QuickAction Component - Compact Square Design
+  // QuickAction Component - Professional Square Design
   const QuickAction = ({
     icon: Icon,
     title,
@@ -290,25 +290,27 @@ const DashboardScreen = () => {
 
     return (
       <Animated.View entering={ZoomIn.delay(delay).springify()}>
-        <View style={width < 380 ? tw`w-[23%] mb-2` : tw`w-[23%] mb-2`}>
+        <View style={width < 380 ? tw`w-[48%] mb-4` : tw`w-[23%] mb-4`}>
           <Animated.View style={animatedStyle}>
             <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
-              <LinearGradient
-                colors={gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={tw`rounded-xl p-3 shadow-md items-center`}
-              >
-                <View style={tw`bg-white/20 p-2 rounded-lg mb-2`}>
-                  <Icon stroke="#ffffff" width={20} height={20} strokeWidth={2.5} />
-                </View>
-                <Text style={tw`text-white font-bold text-xs text-center mb-0.5`} numberOfLines={1}>
-                  {title}
-                </Text>
-                <Text style={tw`text-white/70 text-[10px] text-center`} numberOfLines={1}>
-                  {subtitle}
-                </Text>
-              </LinearGradient>
+              <GlassCard style={tw`p-4`}>
+                <LinearGradient
+                  colors={gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={tw`rounded-2xl p-4 items-center shadow-lg`}
+                >
+                  <View style={tw`bg-white/25 p-3 rounded-2xl mb-3 shadow-md`}>
+                    <Icon stroke="#ffffff" width={28} height={28} strokeWidth={2.5} />
+                  </View>
+                  <Text style={tw`text-white font-bold text-sm text-center mb-1`} numberOfLines={1}>
+                    {title}
+                  </Text>
+                  <Text style={tw`text-white/80 text-xs text-center`} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                </LinearGradient>
+              </GlassCard>
             </Pressable>
           </Animated.View>
         </View>
@@ -419,12 +421,13 @@ const DashboardScreen = () => {
         {/* Welcome Header */}
         <Animated.View
           entering={FadeInDown.springify()}
-          style={tw`mb-6`}
         >
-          <Text style={tw`text-4xl font-extrabold text-gray-900 mb-2`}>Panel de Control</Text>
-          <Text style={tw`text-gray-600 text-lg`}>
-            Vista general del sistema de monitoreo
-          </Text>
+          <GlassCard style={tw`p-5 mb-6`}>
+            <Text style={tw`text-4xl font-extrabold text-gray-900 mb-2`}>Panel de Control</Text>
+            <Text style={tw`text-gray-600 text-base leading-relaxed`}>
+              Vista general del sistema de monitoreo
+            </Text>
+          </GlassCard>
         </Animated.View>
 
         {/* Stats Section */}
@@ -492,8 +495,9 @@ const DashboardScreen = () => {
 
         {/* Quick Actions */}
         <Animated.View entering={FadeInUp.delay(500).springify()} style={tw`mb-4`}>
-          <Text style={tw`text-base font-bold text-gray-900 mb-3`}>Acciones Rápidas</Text>
-          <View style={tw`flex-row flex-wrap justify-between`}>
+          <GlassCard style={tw`p-4 mb-4`}>
+            <Text style={tw`text-xl font-bold text-gray-900 mb-4`}>Acciones Rápidas</Text>
+            <View style={tw`flex-row flex-wrap justify-between`}>
             <QuickAction
               icon={Activity}
               title="Nuevo Monitoreo"
@@ -526,7 +530,8 @@ const DashboardScreen = () => {
               onPress={() => navigation.navigate('RegistrosScreen')}
               delay={300}
             />
-          </View>
+            </View>
+          </GlassCard>
         </Animated.View>
 
         {/* System Status */}
