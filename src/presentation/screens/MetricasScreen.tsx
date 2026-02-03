@@ -108,7 +108,7 @@
 //     temperatura: { bg: "bg-orange-100", text: "text-orange-600", icon: Thermometer },
 //     humedad: { bg: "bg-blue-100", text: "text-blue-600", icon: Droplet },
 //     lux: { bg: "bg-yellow-100", text: "text-yellow-600", icon: Sun },
-//     presion: { bg: "bg-purple-100", text: "text-purple-600", icon: AlertCircle },
+//     presion: { bg: "bg-blue-100", text: "text-blue-600", icon: AlertCircle },
 //   };
 
 //   const Icon = metricColors[metric].icon;

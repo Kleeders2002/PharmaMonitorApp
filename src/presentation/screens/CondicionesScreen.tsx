@@ -136,8 +136,8 @@ const CondicionCard: React.FC<CondicionCardProps> = ({ item }) => {
           
           <View style={tw`bg-blue-50 p-3 rounded-lg mb-2 w-[48%]`}>
             <View style={tw`flex-row items-center mb-1`}>
-              <Wind stroke="#7e22ce" width={16} height={16} />
-              <Text style={tw`ml-1 text-xs font-medium text-purple-700`}>Presión</Text>
+              <Wind stroke="#3b82f6" width={16} height={16} />
+              <Text style={tw`ml-1 text-xs font-medium text-blue-700`}>Presión</Text>
             </View>
             <Text style={tw`text-sm font-bold text-blue-800`}>
               {item.presion_min} - {item.presion_max} hPa
@@ -179,7 +179,7 @@ const CondicionCard: React.FC<CondicionCardProps> = ({ item }) => {
             min={item.presion_min}
             max={item.presion_max}
             unit="hPa"
-            icon={<Wind stroke="#7e22ce" width={16} height={16} />}
+            icon={<Wind stroke="#3b82f6" width={16} height={16} />}
             isOpen={expandedSection === 'presion'}
             onToggle={() => toggleSection('presion')}
           />
