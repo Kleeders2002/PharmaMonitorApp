@@ -489,7 +489,7 @@ const ConsultarMetricasScreen = () => {
         entering={FadeInUp.delay(index * 100).springify()}
       >
         <TouchableOpacity
-          style={tw`bg-white rounded-2xl p-4 mb-3 shadow-md border border-gray-100`}
+          style={tw`bg-blue-50 rounded-2xl p-4 mb-3 shadow-md border border-blue-100`}
           onPress={() => {
             // @ts-ignore
             navigation.navigate('HistoricoMonitoreo', { productoId: product.id });
@@ -506,11 +506,11 @@ const ConsultarMetricasScreen = () => {
 
             <View style={tw`flex-1`}>
               <View style={tw`flex-row justify-between items-start mb-2`}>
-                <Text style={tw`font-bold text-gray-800 flex-1 mr-2`}>
+                <Text style={tw`font-bold text-gray-900 flex-1 mr-2`}>
                   {product.nombre_producto}
                 </Text>
-                <View style={tw`bg-gray-100 px-2.5 py-1 rounded-full`}>
-                  <Text style={tw`text-gray-600 text-xs font-bold`}>Finalizado</Text>
+                <View style={tw`bg-blue-200 px-2.5 py-1 rounded-full`}>
+                  <Text style={tw`text-blue-900 text-xs font-bold`}>Finalizado</Text>
                 </View>
               </View>
 
@@ -574,7 +574,7 @@ const ConsultarMetricasScreen = () => {
         <View
           style={tw`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[70%] shadow-2xl`}
         >
-          <Animated.View style={[modalStyle, tw`p-5 border-b border-gray-100`]}>
+          <Animated.View style={[modalStyle, tw`p-5 border-b border-blue-100`]}>
             <View style={tw`flex-row justify-between items-center`}>
               <Text style={tw`text-xl font-bold text-gray-900`}>Seleccionar Producto</Text>
               <TouchableOpacity onPress={() => setShowProductSelector(false)}>
@@ -593,7 +593,7 @@ const ConsultarMetricasScreen = () => {
                   tw`flex-row items-center p-4 mb-3 rounded-2xl border-2 shadow-sm`,
                   selectedProduct === product.id
                     ? tw`bg-blue-50 border-blue-500`
-                    : tw`bg-white border-gray-100`,
+                    : tw`bg-white border-blue-100`,
                 ]}
                 onPress={() => {
                   setSelectedProduct(product.id);
@@ -750,7 +750,7 @@ const ConsultarMetricasScreen = () => {
                   onPress={() => setTabValue(1)}
                   style={tw.style(
                     `flex-1 py-3 rounded-xl flex-row items-center justify-center`,
-                    tabValue === 1 ? `bg-white shadow-lg` : ``
+                    tabValue === 1 ? `bg-blue-100 shadow-lg border-2 border-blue-300` : `bg-blue-50`
                   )}
                   activeOpacity={0.9}
                 >
@@ -760,12 +760,12 @@ const ConsultarMetricasScreen = () => {
                   >
                     <View style={tw.style(
                       `p-1.5 rounded-lg`,
-                      tabValue === 1 ? `bg-blue-500` : `bg-transparent`
+                      tabValue === 1 ? `bg-blue-500` : `bg-blue-200`
                     )}>
                       <Archive
                         width={18}
                         height={18}
-                        stroke={tabValue === 1 ? '#ffffff' : '#ffffff80'}
+                        stroke={tabValue === 1 ? '#ffffff' : '#1e40af'}
                         strokeWidth={2.5}
                       />
                     </View>
@@ -792,13 +792,13 @@ const ConsultarMetricasScreen = () => {
               entering={FadeInUp.delay(200).springify()}
               style={tw`flex-row gap-3 mt-4`}
             >
-              <View style={tw`flex-1 bg-blue-100 backdrop-blur-sm rounded-xl p-3`}>
+              <View style={tw`flex-1 bg-blue-50 backdrop-blur-sm rounded-xl p-3`}>
                 <View style={tw`flex-row items-center`}>
-                  <View style={tw`bg-white p-2 rounded-lg`}>
+                  <View style={tw`bg-blue-200 p-2 rounded-lg`}>
                     <Activity width={16} height={16} stroke="#1e40af" strokeWidth={2.5} />
                   </View>
                   <View style={tw`ml-2`}>
-                    <Text style={tw`text-blue-800 text-xs font-semibold`}>En Monitoreo</Text>
+                    <Text style={tw`text-blue-900 text-xs font-semibold`}>En Monitoreo</Text>
                     <Text style={tw`text-blue-900 text-xl font-bold`}>{activeProducts.length}</Text>
                   </View>
                 </View>
