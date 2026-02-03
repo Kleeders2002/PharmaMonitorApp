@@ -290,7 +290,7 @@ const DashboardScreen = () => {
 
     return (
       <Animated.View entering={ZoomIn.delay(delay).springify()}>
-        <View style={width < 380 ? tw`w-[48%] mb-4` : tw`w-[23%] mb-4`}>
+        <View style={tw`w-full mb-4`}>
           <Animated.View style={animatedStyle}>
             <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
               <GlassCard style={tw`p-4`}>
@@ -298,17 +298,21 @@ const DashboardScreen = () => {
                   colors={gradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={tw`rounded-2xl p-4 items-center shadow-lg`}
+                  style={tw`rounded-2xl p-4 shadow-lg`}
                 >
-                  <View style={tw`bg-white/25 p-3 rounded-2xl mb-3 shadow-md`}>
-                    <Icon stroke="#ffffff" width={28} height={28} strokeWidth={2.5} />
+                  <View style={tw`flex-row items-center`}>
+                    <View style={tw`bg-white/25 p-3 rounded-2xl mr-4 shadow-md`}>
+                      <Icon stroke="#ffffff" width={28} height={28} strokeWidth={2.5} />
+                    </View>
+                    <View style={tw`flex-1`}>
+                      <Text style={tw`text-white font-bold text-base mb-1`} numberOfLines={1}>
+                        {title}
+                      </Text>
+                      <Text style={tw`text-white/80 text-sm`} numberOfLines={1}>
+                        {subtitle}
+                      </Text>
+                    </View>
                   </View>
-                  <Text style={tw`text-white font-bold text-sm text-center mb-1`} numberOfLines={1}>
-                    {title}
-                  </Text>
-                  <Text style={tw`text-white/80 text-xs text-center`} numberOfLines={1}>
-                    {subtitle}
-                  </Text>
                 </LinearGradient>
               </GlassCard>
             </Pressable>
