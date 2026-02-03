@@ -459,8 +459,8 @@ const DashboardScreen = () => {
             icon={Package}
             title="Total Productos"
             value={stats.totalProductos}
-            color="#8b5cf6"
-            gradient={['#c4b5fd', '#a78bfa']}
+            color="#3b82f6"
+            gradient={['#bfdbfe', '#93c5fd']}
             onPress={() => navigation.navigate('ProductosScreen')}
             delay={300}
           />
@@ -506,7 +506,7 @@ const DashboardScreen = () => {
               icon={Package}
               title="Ver Productos"
               subtitle="Catálogo completo"
-              gradient={['#8b5cf6', '#7c3aed']}
+              gradient={['#3b82f6', '#2563eb']}
               onPress={() => navigation.navigate('ProductosScreen')}
               delay={100}
             />

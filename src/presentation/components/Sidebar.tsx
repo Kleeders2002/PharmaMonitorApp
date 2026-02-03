@@ -160,7 +160,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Header with Gradient */}
         <Animated2.View entering={ZoomIn.springify()} style={tw`p-6 mb-4`}>
           <LinearGradient
-            colors={['#3b82f6', '#8b5cf6', '#06b6d4']}
+            colors={['#3b82f6', '#2563eb', '#06b6d4']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={tw`rounded-3xl p-6 shadow-xl`}
@@ -211,7 +211,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   style={[
                     tw`flex-row items-center py-3.5 px-4 rounded-2xl mb-2`,
                     isActive
-                      ? tw`bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 shadow-lg`
+                      ? tw`bg-blue-600 shadow-lg border-2 border-blue-700`
                       : tw`bg-gray-50`,
                   ]}
                   onPress={() => {
@@ -253,7 +253,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         style={[
                           tw`flex-row items-center py-2.5 px-4 rounded-xl mb-2 ml-4`,
                           isCurrentRoute(subItem.screen)
-                            ? tw`bg-gradient-to-r from-blue-50 to-purple-50`
+                            ? tw`bg-blue-100 border border-blue-300`
                             : tw`bg-gray-100`,
                         ]}
                         onPress={() => {
@@ -262,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         }}
                       >
                         <subItem.icon
-                          stroke={isCurrentRoute(subItem.screen) ? '#3b82f6' : '#6b7280'}
+                          stroke={isCurrentRoute(subItem.screen) ? '#2563eb' : '#6b7280'}
                           width={18}
                           height={18}
                           strokeWidth={2.5}
@@ -271,7 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           style={[
                             tw`ml-3 text-sm font-medium`,
                             isCurrentRoute(subItem.screen)
-                              ? tw`text-blue-700`
+                              ? tw`text-blue-800 font-semibold`
                               : tw`text-gray-600`,
                           ]}
                         >

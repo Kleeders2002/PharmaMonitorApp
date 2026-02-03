@@ -134,12 +134,12 @@ const CondicionCard: React.FC<CondicionCardProps> = ({ item }) => {
             </Text>
           </View>
           
-          <View style={tw`bg-purple-50 p-3 rounded-lg mb-2 w-[48%]`}>
+          <View style={tw`bg-blue-50 p-3 rounded-lg mb-2 w-[48%]`}>
             <View style={tw`flex-row items-center mb-1`}>
               <Wind stroke="#7e22ce" width={16} height={16} />
               <Text style={tw`ml-1 text-xs font-medium text-purple-700`}>Presión</Text>
             </View>
-            <Text style={tw`text-sm font-bold text-purple-800`}>
+            <Text style={tw`text-sm font-bold text-blue-800`}>
               {item.presion_min} - {item.presion_max} hPa
             </Text>
           </View>

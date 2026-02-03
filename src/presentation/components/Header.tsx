@@ -91,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <LinearGradient
-      colors={['#3b82f6', '#8b5cf6', '#06b6d4']}
+      colors={['#3b82f6', '#2563eb', '#06b6d4']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 0 }}
       style={tw`z-30`}

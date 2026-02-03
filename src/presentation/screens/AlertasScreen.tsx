@@ -84,7 +84,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alerta, producto }) => {
         {/* Encabezado de la tarjeta */}
         <View style={tw`flex-row`}>
           {/* Imagen del producto */}
-          <View style={tw`w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl overflow-hidden shadow-md`}>
+          <View style={tw`w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-50 rounded-2xl overflow-hidden shadow-md`}>
             {producto.foto_producto ? (
               <Image
                 source={{ uri: producto.foto_producto }}
@@ -143,7 +143,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alerta, producto }) => {
           </View>
 
           {/* Icono de parámetro */}
-          <View style={tw`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 shadow-md`}>
+          <View style={tw`p-3 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-50 shadow-md`}>
             {renderParametroIcon()}
           </View>
         </View>

@@ -90,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
         {/* Encabezado de la tarjeta */}
         <View style={tw`flex-row`}>
           {/* Imagen del producto */}
-          <View style={tw`w-20 h-20 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl overflow-hidden shadow-md`}>
+          <View style={tw`w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-50 rounded-2xl overflow-hidden shadow-md`}>
             {item.foto ? (
               <Image
                 source={{ uri: item.foto }}
@@ -112,8 +112,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ item }) => {
               <View style={tw`bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 rounded-full mr-2`}>
                 <Text style={tw`text-xs text-blue-700 font-semibold`}>{item.concentracion}</Text>
               </View>
-              <View style={tw`bg-gradient-to-r from-purple-100 to-purple-50 px-3 py-1.5 rounded-full`}>
-                <Text style={tw`text-xs text-purple-700 font-semibold`}>{item.formafarmaceutica}</Text>
+              <View style={tw`bg-gradient-to-r from-blue-100 to-blue-50 px-3 py-1.5 rounded-full`}>
+                <Text style={tw`text-xs text-blue-700 font-semibold`}>{item.formafarmaceutica}</Text>
               </View>
             </View>
           </View>

@@ -132,8 +132,8 @@ const metricConfig: Record<
   },
   presion: {
     bg: '#f3e8ff',
-    text: '#7c3aed',
-    chart: '#8b5cf6',
+    text: '#2563eb',
+    chart: '#3b82f6',
     gradient: ['#ddd6fe', '#c4b5fd'],
     icon: AlertTriangle,
     unit: 'hPa',
@@ -407,8 +407,8 @@ const ConsultarMetricasScreen = () => {
               </View>
 
               <View style={tw`flex-row items-center`}>
-                <View style={tw`bg-purple-100 p-1.5 rounded-lg mr-2`}>
-                  <Calendar width={16} height={16} stroke="#8b5cf6" strokeWidth={2} />
+                <View style={tw`bg-blue-100 p-1.5 rounded-lg mr-2`}>
+                  <Calendar width={16} height={16} stroke="#3b82f6" strokeWidth={2} />
                 </View>
                 <Text style={tw`text-sm text-gray-700 font-medium`}>
                   {format(new Date(product.fecha_inicio_monitoreo), 'd MMM yyyy', { locale: es })}
@@ -437,7 +437,7 @@ const ConsultarMetricasScreen = () => {
             <SpecRow
               label="Presión"
               value={`${product.presion_min} - ${product.presion_max} hPa`}
-              color="#8b5cf6"
+              color="#3b82f6"
             />
           </View>
 
@@ -522,7 +522,7 @@ const ConsultarMetricasScreen = () => {
               </View>
 
               <View style={tw`flex-row items-center`}>
-                <Calendar width={14} height={14} stroke="#8b5cf6" strokeWidth={2} />
+                <Calendar width={14} height={14} stroke="#3b82f6" strokeWidth={2} />
                 <Text style={tw`text-xs text-gray-600 ml-1.5`}>
                   {format(new Date(product.fecha_inicio_monitoreo), 'dd MMM yyyy', { locale: es })} -{' '}
                   {product.fecha_finalizacion_monitoreo
@@ -760,7 +760,7 @@ const ConsultarMetricasScreen = () => {
                   >
                     <View style={tw.style(
                       `p-1.5 rounded-lg`,
-                      tabValue === 1 ? `bg-purple-500` : `bg-transparent`
+                      tabValue === 1 ? `bg-blue-500` : `bg-transparent`
                     )}>
                       <Archive
                         width={18}
@@ -961,7 +961,7 @@ const ConsultarMetricasScreen = () => {
                 <View style={tw`items-center justify-center py-16`}>
                   <Animated.View entering={ZoomIn.springify()}>
                     <View
-                      style={tw`bg-gradient-to-br from-purple-100 to-blue-100 p-6 rounded-3xl mb-4`}
+                      style={tw`bg-gradient-to-br from-blue-100 to-blue-100 p-6 rounded-3xl mb-4`}
                     >
                       <ActivityIndicator size="large" color="#667eea" />
                     </View>
@@ -1086,11 +1086,11 @@ const ConsultarMetricasScreen = () => {
               <Animated.View entering={FadeInUp.springify()} style={tw`mb-6`}>
                 <LinearGradient
                   colors={['#667eea15', '#764ba215']}
-                  style={tw`rounded-2xl p-5 border border-purple-100`}
+                  style={tw`rounded-2xl p-5 border border-blue-100`}
                 >
                   <View style={tw`flex-row items-center justify-between`}>
                     <View style={tw`flex-row items-center`}>
-                      <View style={tw`bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-2xl`}>
+                      <View style={tw`bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl`}>
                         <Archive width={24} height={24} stroke="#ffffff" strokeWidth={2} />
                       </View>
                       <View style={tw`ml-4`}>

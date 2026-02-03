@@ -75,8 +75,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, onSelectProduct }) => {
                 <Text style={tw`text-xs text-blue-700`}>{item.concentracion}</Text>
               </View>
               {item.formafarmaceutica && (
-                <View style={tw`bg-purple-100 px-2 py-1 rounded-full mb-1`}>
-                  <Text style={tw`text-xs text-purple-700`}>{item.formafarmaceutica}</Text>
+                <View style={tw`bg-blue-100 px-2 py-1 rounded-full mb-1`}>
+                  <Text style={tw`text-xs text-blue-700`}>{item.formafarmaceutica}</Text>
                 </View>
               )}
             </View>
