@@ -293,25 +293,28 @@ const DashboardScreen = () => {
         <View style={tw`w-full mb-4`}>
           <Animated.View style={animatedStyle}>
             <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
-              <GlassCard style={tw`p-4`}>
+              <GlassCard>
                 <LinearGradient
                   colors={gradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={tw`rounded-2xl p-4 shadow-lg`}
                 >
-                  <View style={tw`flex-row items-center`}>
-                    <View style={tw`bg-white/25 p-3 rounded-2xl mr-4 shadow-md`}>
-                      <Icon stroke="#ffffff" width={28} height={28} strokeWidth={2.5} />
+                  <View style={tw`flex-row items-center justify-between`}>
+                    <View style={tw`flex-row items-center flex-1`}>
+                      <View style={tw`bg-white/25 p-3 rounded-xl mr-3 shadow-sm`}>
+                        <Icon stroke="#ffffff" width={26} height={26} strokeWidth={2.5} />
+                      </View>
+                      <View style={tw`flex-1 ml-1`}>
+                        <Text style={tw`text-white font-bold text-base`} numberOfLines={1}>
+                          {title}
+                        </Text>
+                        <Text style={tw`text-white/90 text-sm mt-0.5`} numberOfLines={1}>
+                          {subtitle}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={tw`flex-1`}>
-                      <Text style={tw`text-white font-bold text-base mb-1`} numberOfLines={1}>
-                        {title}
-                      </Text>
-                      <Text style={tw`text-white/80 text-sm`} numberOfLines={1}>
-                        {subtitle}
-                      </Text>
-                    </View>
+                    <ChevronRight stroke="#ffffff" width={20} height={20} strokeWidth={2} />
                   </View>
                 </LinearGradient>
               </GlassCard>
