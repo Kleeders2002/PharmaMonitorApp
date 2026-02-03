@@ -128,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({
             <View style={tw`flex-1 items-center`}>
               <View style={tw`bg-white rounded-2xl p-2 shadow-lg`}>
                 <Image
-                  source={require('../../../assets/logo.png')}
+                  source={require('../../../assets/logoinverse.png')}
                   style={tw`w-12 h-12`}
                   resizeMode="contain"
                 />
