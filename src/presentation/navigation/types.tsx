@@ -4,7 +4,6 @@ export type RootStackParamList = {
   Dashboard: undefined;
   AlertasScreen: undefined;
   PerfilScreen: undefined;
-  Configuracion: undefined;
   ProductosScreen: undefined;
   CondicionesScreen: undefined;
   AgregarMonitoreoScreen: undefined;
