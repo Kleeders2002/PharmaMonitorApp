@@ -11,10 +11,11 @@ import {
   Dimensions,
   StatusBar,
   Alert,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
-import { format } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LinearGradient } from 'expo-linear-gradient';
 import tw from 'twrnc';
@@ -32,10 +33,9 @@ import {
   Package,
   ChevronDown,
   CheckCircle,
-  TrendingUp,
-  TrendingDown,
-  Zap,
   Activity,
+  Filter,
+  X,
 } from 'react-native-feather';
 import Animated, {
   useSharedValue,
@@ -48,10 +48,9 @@ import Animated, {
   FadeInDown,
   FadeInUp,
   FadeIn,
-  FadeInLeft,
-  FadeInRight,
   ZoomIn,
 } from 'react-native-reanimated';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import MainLayout from '../layouts/MainLayout';
 import api from '../../../api';
 import { GlassCard } from '../components/animations';
@@ -89,6 +88,7 @@ interface ProductoMonitoreado {
 }
 
 type MetricType = 'temperatura' | 'humedad' | 'lux' | 'presion';
+type DateRangeType = '24h' | '7d' | '30d' | 'custom';
 
 // ============= CONFIGURATION =============
 const metricConfig: Record<
@@ -131,10 +131,10 @@ const metricConfig: Record<
     label: 'Luz',
   },
   presion: {
-    bg: '#f3e8ff',
+    bg: '#dbeafe',
     text: '#2563eb',
     chart: '#3b82f6',
-    gradient: ['#ddd6fe', '#c4b5fd'],
+    gradient: ['#bfdbfe', '#93c5fd'],
     icon: AlertTriangle,
     unit: 'hPa',
     label: 'Presión',
@@ -147,6 +147,7 @@ const ConsultarMetricasScreen = () => {
 
   // State
   const [data, setData] = useState<MonitoringData[]>([]);
+  const [allData, setAllData] = useState<MonitoringData[]>([]);
   const [activeProducts, setActiveProducts] = useState<ProductoMonitoreado[]>([]);
   const [historicalProducts, setHistoricalProducts] = useState<ProductoMonitoreado[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
@@ -157,6 +158,14 @@ const ConsultarMetricasScreen = () => {
   const [tabValue, setTabValue] = useState(0);
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Date filter state
+  const [dateRangeType, setDateRangeType] = useState<DateRangeType>('24h');
+  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 1));
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showDateFilterModal, setShowDateFilterModal] = useState(false);
 
   // Animation values
   const pulseAnim = useSharedValue(1);
@@ -182,8 +191,8 @@ const ConsultarMetricasScreen = () => {
     }
   };
 
-  // Fetch monitoring data
-  const fetchData = async () => {
+  // Fetch all monitoring data
+  const fetchAllData = async () => {
     if (!selectedProduct) return;
 
     try {
@@ -192,7 +201,8 @@ const ConsultarMetricasScreen = () => {
         (a: MonitoringData, b: MonitoringData) =>
           new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
       );
-      setData(sortedData.slice(-30));
+      setAllData(sortedData);
+      filterDataByDateRange(sortedData, startDate, endDate);
       setError(null);
     } catch (err) {
       setError('Error al obtener datos de monitoreo');
@@ -201,6 +211,50 @@ const ConsultarMetricasScreen = () => {
       setLoading(false);
     }
   };
+
+  // Filter data by date range
+  const filterDataByDateRange = (allData: MonitoringData[], start: Date, end: Date) => {
+    const startTimestamp = startOfDay(start).getTime();
+    const endTimestamp = endOfDay(end).getTime();
+
+    const filtered = allData.filter((d) => {
+      const dataTimestamp = new Date(d.fecha).getTime();
+      return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
+    });
+
+    setData(filtered);
+  };
+
+  // Handle date range type change
+  const handleDateRangeChange = (range: DateRangeType) => {
+    setDateRangeType(range);
+    const now = new Date();
+
+    switch (range) {
+      case '24h':
+        setStartDate(subDays(now, 1));
+        setEndDate(now);
+        break;
+      case '7d':
+        setStartDate(subDays(now, 7));
+        setEndDate(now);
+        break;
+      case '30d':
+        setStartDate(subDays(now, 30));
+        setEndDate(now);
+        break;
+      case 'custom':
+        // Keep current dates
+        break;
+    }
+  };
+
+  // Apply date filter
+  useEffect(() => {
+    if (allData.length > 0) {
+      filterDataByDateRange(allData, startDate, endDate);
+    }
+  }, [startDate, endDate, allData]);
 
   // Handle stop monitoring
   const handleStopMonitoring = async () => {
@@ -237,7 +291,7 @@ const ConsultarMetricasScreen = () => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchProducts();
-    if (selectedProduct) await fetchData();
+    if (selectedProduct) await fetchAllData();
     setRefreshing(false);
   }, [selectedProduct]);
 
@@ -258,13 +312,174 @@ const ConsultarMetricasScreen = () => {
 
   useEffect(() => {
     if (selectedProduct) {
-      fetchData();
-      const interval = setInterval(fetchData, 5000);
+      fetchAllData();
+      const interval = setInterval(fetchAllData, 5000);
       return () => clearInterval(interval);
     }
   }, [selectedProduct]);
 
-  // ============= METRIC CARD COMPONENT (COMPACT) =============
+  // Date picker handlers
+  const onStartDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowStartDatePicker(false);
+    }
+    if (selectedDate) {
+      setStartDate(selectedDate);
+    }
+  };
+
+  const onEndDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowEndDatePicker(false);
+    }
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
+  };
+
+  // ============= DATE RANGE BUTTON =============
+  const DateRangeButton = () => {
+    return (
+      <TouchableOpacity
+        onPress={() => setShowDateFilterModal(true)}
+        style={tw`bg-white rounded-2xl shadow-lg border border-blue-100 p-4`}
+      >
+        <View style={tw`flex-row items-center justify-between`}>
+          <View style={tw`flex-row items-center flex-1`}>
+            <View style={tw`bg-blue-100 p-2.5 rounded-xl mr-3`}>
+              <Filter width={20} height={20} stroke="#2563eb" strokeWidth={2} />
+            </View>
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Rango de fechas</Text>
+              <Text style={tw`text-sm font-bold text-gray-900`}>
+                {format(startDate, 'd MMM', { locale: es })} - {format(endDate, 'd MMM yyyy', { locale: es })}
+              </Text>
+            </View>
+          </View>
+          <View style={tw`bg-blue-500 px-3 py-1.5 rounded-full`}>
+            <Text style={tw`text-white text-xs font-bold`}>
+              {data.length} datos
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // ============= DATE FILTER MODAL =============
+  const DateFilterModal = () => {
+    if (!showDateFilterModal) return null;
+
+    return (
+      <View style={tw`absolute top-0 left-0 right-0 bottom-0 bg-black/50 z-50 flex-1 justify-end`}>
+        <View style={tw`bg-white rounded-t-3xl shadow-2xl`}>
+          <View style={tw`p-5 border-b border-gray-100`}>
+            <View style={tw`flex-row justify-between items-center`}>
+              <Text style={tw`text-xl font-bold text-gray-900`}>Filtrar por fechas</Text>
+              <TouchableOpacity onPress={() => setShowDateFilterModal(false)}>
+                <View style={tw`bg-gray-100 p-2 rounded-full`}>
+                  <X width={20} height={20} stroke="#6b7280" strokeWidth={2} />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <ScrollView style={tw`p-5`}>
+            {/* Quick range options */}
+            <Text style={tw`text-sm font-bold text-gray-700 mb-3`}>Rango rápido</Text>
+            <View style={tw`flex-row gap-2 mb-6`}>
+              {(['24h', '7d', '30d'] as DateRangeType[]).map((range) => (
+                <TouchableOpacity
+                  key={range}
+                  onPress={() => {
+                    handleDateRangeChange(range);
+                    setShowDateFilterModal(false);
+                  }}
+                  style={[
+                    tw`flex-1 py-3 rounded-xl border-2`,
+                    dateRangeType === range
+                      ? tw`bg-blue-500 border-blue-500`
+                      : tw`bg-white border-gray-200`,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      tw`text-center font-bold text-sm`,
+                      dateRangeType === range ? tw`text-white` : tw`text-gray-700`,
+                    ]}
+                  >
+                    {range === '24h' ? '24 horas' : range === '7d' ? '7 días' : '30 días'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Custom date range */}
+            <Text style={tw`text-sm font-bold text-gray-700 mb-3`}>Rango personalizado</Text>
+
+            <TouchableOpacity
+              onPress={() => {
+                setDateRangeType('custom');
+                setShowStartDatePicker(true);
+              }}
+              style={tw`bg-gray-50 rounded-xl p-4 mb-3 border-2 border-gray-200`}
+            >
+              <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Desde</Text>
+              <Text style={tw`text-lg font-bold text-gray-900`}>
+                {format(startDate, 'd MMMM yyyy', { locale: es })}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setDateRangeType('custom');
+                setShowEndDatePicker(true);
+              }}
+              style={tw`bg-gray-50 rounded-xl p-4 mb-4 border-2 border-gray-200`}
+            >
+              <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Hasta</Text>
+              <Text style={tw`text-lg font-bold text-gray-900`}>
+                {format(endDate, 'd MMMM yyyy', { locale: es })}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowDateFilterModal(false)}
+              style={tw`bg-blue-500 rounded-xl p-4 shadow-lg`}
+            >
+              <Text style={tw`text-white text-center font-bold text-base`}>Aplicar filtro</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Date pickers */}
+          {showStartDatePicker && (
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display="default"
+              onChange={onStartDateChange}
+              maximumDate={endDate}
+              style={tw`flex-1`}
+            />
+          )}
+
+          {showEndDatePicker && (
+            <DateTimePicker
+              value={endDate}
+              mode="date"
+              display="default"
+              onChange={onEndDateChange}
+              minimumDate={startDate}
+              maximumDate={new Date()}
+              style={tw`flex-1`}
+            />
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  // ============= METRIC CARD COMPONENT =============
   const MetricCard = ({ metric }: { metric: MetricType }) => {
     const config = metricConfig[metric];
     const Icon = config.icon;
@@ -554,27 +769,12 @@ const ConsultarMetricasScreen = () => {
   const ProductSelectorModal = () => {
     if (!showProductSelector) return null;
 
-    const modalAnim = useSharedValue(0);
-
-    useEffect(() => {
-      modalAnim.value = withSpring(1, { damping: 15 });
-    }, []);
-
-    const modalStyle = useAnimatedStyle(() => ({
-      opacity: modalAnim.value,
-      transform: [
-        {
-          translateY: (1 - modalAnim.value) * 100,
-        },
-      ],
-    }));
-
     return (
       <View style={tw`absolute top-0 left-0 right-0 bottom-0 bg-black/50 z-50`}>
         <View
           style={tw`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[70%] shadow-2xl`}
         >
-          <Animated.View style={[modalStyle, tw`p-5 border-b border-blue-100`]}>
+          <View style={tw`p-5 border-b border-blue-100`}>
             <View style={tw`flex-row justify-between items-center`}>
               <Text style={tw`text-xl font-bold text-gray-900`}>Seleccionar Producto</Text>
               <TouchableOpacity onPress={() => setShowProductSelector(false)}>
@@ -583,7 +783,7 @@ const ConsultarMetricasScreen = () => {
                 </View>
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
 
           <ScrollView style={tw`p-4`}>
             {activeProducts.map((product) => (
@@ -660,19 +860,20 @@ const ConsultarMetricasScreen = () => {
     backgroundGradientFrom: '#ffffff',
     backgroundGradientTo: '#ffffff',
     decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
     style: {
       borderRadius: 16,
     },
     propsForDots: {
-      r: '5',
+      r: '4',
       strokeWidth: '2',
       stroke: metricConfig[selectedMetric].chart,
     },
     propsForBackgroundLines: {
-      strokeDasharray: '5, 5',
-      stroke: '#f3f4f6',
+      strokeDasharray: '4, 4',
+      stroke: '#e5e7eb',
+      strokeWidth: '1',
     },
   };
 
@@ -682,11 +883,12 @@ const ConsultarMetricasScreen = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
       <MainLayout title="">
         <ProductSelectorModal />
+        <DateFilterModal />
 
-        {/* Hero Section with Animated Gradient Background */}
+        {/* Hero Section with Blue Gradient Background */}
         <Animated.View entering={FadeInDown.springify()} style={tw`overflow-hidden`}>
           <LinearGradient
-            colors={['#667eea', '#764ba2', '#f093fb']}
+            colors={['#3b82f6', '#2563eb', '#06b6d4']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={tw`px-5 pt-8 pb-6`}
@@ -714,10 +916,7 @@ const ConsultarMetricasScreen = () => {
                   )}
                   activeOpacity={0.9}
                 >
-                  <Animated.View
-                    entering={ZoomIn.springify()}
-                    style={tw`flex-row items-center`}
-                  >
+                  <View style={tw`flex-row items-center`}>
                     <View style={tw.style(
                       `p-1.5 rounded-lg`,
                       tabValue === 0 ? `bg-blue-500` : `bg-transparent`
@@ -743,7 +942,7 @@ const ConsultarMetricasScreen = () => {
                       </Text>
                     </View>
                     {tabValue === 0 && <LiveIndicator />}
-                  </Animated.View>
+                  </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -754,10 +953,7 @@ const ConsultarMetricasScreen = () => {
                   )}
                   activeOpacity={0.9}
                 >
-                  <Animated.View
-                    entering={ZoomIn.springify()}
-                    style={tw`flex-row items-center`}
-                  >
+                  <View style={tw`flex-row items-center`}>
                     <View style={tw.style(
                       `p-1.5 rounded-lg`,
                       tabValue === 1 ? `bg-blue-500` : `bg-blue-200`
@@ -782,7 +978,7 @@ const ConsultarMetricasScreen = () => {
                         {historicalProducts.length}
                       </Text>
                     </View>
-                  </Animated.View>
+                  </View>
                 </TouchableOpacity>
               </View>
             </View>
@@ -815,7 +1011,7 @@ const ConsultarMetricasScreen = () => {
                   </View>
                 </View>
               </View>
-            </Animated.View>
+            </View>
           </LinearGradient>
         </Animated.View>
 
@@ -827,8 +1023,8 @@ const ConsultarMetricasScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#667eea']}
-              tintColor="#667eea"
+              colors={['#3b82f6']}
+              tintColor="#3b82f6"
             />
           }
         >
@@ -843,7 +1039,7 @@ const ConsultarMetricasScreen = () => {
                   <LinearGradient
                     colors={
                       selectedProduct
-                        ? ['#667eea', '#764ba2']
+                        ? ['#3b82f6', '#2563eb']
                         : ['#f3f4f6', '#e5e7eb']
                     }
                     start={{ x: 0, y: 0 }}
@@ -888,8 +1084,7 @@ const ConsultarMetricasScreen = () => {
                           </Text>
                         </View>
                       </View>
-                      <Animated.View
-                        sharedTransitionTag="chevron"
+                      <View
                         style={tw.style(
                           `p-2.5 rounded-xl`,
                           selectedProduct ? `bg-white/20` : `bg-white/50`
@@ -901,7 +1096,7 @@ const ConsultarMetricasScreen = () => {
                           stroke={selectedProduct ? '#ffffff' : '#6b7280'}
                           strokeWidth={2.5}
                         />
-                      </Animated.View>
+                      </View>
                     </View>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -919,7 +1114,7 @@ const ConsultarMetricasScreen = () => {
                     colors={
                       !selectedProduct || isStopping
                         ? ['#d1d5db', '#9ca3af']
-                        : ['#ff6b6b', '#ee5a6f']
+                        : ['#ef4444', '#dc2626']
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -945,7 +1140,7 @@ const ConsultarMetricasScreen = () => {
                     colors={
                       !selectedProduct
                         ? ['#d1d5db', '#9ca3af']
-                        : ['#667eea', '#764ba2']
+                        : ['#3b82f6', '#2563eb']
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -963,7 +1158,7 @@ const ConsultarMetricasScreen = () => {
                     <View
                       style={tw`bg-gradient-to-br from-blue-100 to-blue-100 p-6 rounded-3xl mb-4`}
                     >
-                      <ActivityIndicator size="large" color="#667eea" />
+                      <ActivityIndicator size="large" color="#3b82f6" />
                     </View>
                   </Animated.View>
                   <Text style={tw`text-gray-600 mt-4 font-semibold text-lg`}>Cargando productos...</Text>
@@ -993,6 +1188,11 @@ const ConsultarMetricasScreen = () => {
                 <>
                   {/* Product Info Card */}
                   <ProductInfoCard />
+
+                  {/* Date Range Filter */}
+                  <Animated.View entering={FadeInUp.delay(300).springify()} style={tw`mb-5`}>
+                    <DateRangeButton />
+                  </Animated.View>
 
                   {/* Metrics Cards */}
                   <View style={tw`mb-4`}>
@@ -1035,30 +1235,36 @@ const ConsultarMetricasScreen = () => {
                           </View>
                         </View>
 
-                        <LineChart
-                          data={{
-                            labels: data
-                              .map((d) =>
-                                format(new Date(d.fecha), 'HH:mm', { locale: es })
-                              )
-                              .filter((_, i) => i % Math.ceil(data.length / 6) === 0),
-                            datasets: [
-                              {
-                                data: data.map((d) => d[selectedMetric]),
-                                color: () => metricConfig[selectedMetric].chart,
-                                strokeWidth: 3,
-                              },
-                            ],
-                          }}
-                          width={screenWidth - 60}
-                          height={220}
-                          chartConfig={chartConfig}
-                          bezier
-                          style={{
-                            marginVertical: 8,
-                            borderRadius: 16,
-                          }}
-                        />
+                        <View style={tw`items-center`}>
+                          <LineChart
+                            data={{
+                              labels: data
+                                .map((d) =>
+                                  format(new Date(d.fecha), 'HH:mm', { locale: es })
+                                )
+                                .filter((_, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0),
+                              datasets: [
+                                {
+                                  data: data.map((d) => d[selectedMetric]),
+                                  color: () => metricConfig[selectedMetric].chart,
+                                  strokeWidth: 3,
+                                },
+                              ],
+                            }}
+                            width={screenWidth - 60}
+                            height={220}
+                            chartConfig={chartConfig}
+                            bezier
+                            withInnerLines={true}
+                            withOuterLines={true}
+                            withVerticalLines={false}
+                            withHorizontalLines={true}
+                            style={{
+                              marginVertical: 8,
+                              borderRadius: 16,
+                            }}
+                          />
+                        </View>
 
                         <View style={tw`flex-row items-center justify-center mt-3`}>
                           <LiveIndicator />
@@ -1085,7 +1291,7 @@ const ConsultarMetricasScreen = () => {
               {/* Historical Header */}
               <Animated.View entering={FadeInUp.springify()} style={tw`mb-6`}>
                 <LinearGradient
-                  colors={['#667eea15', '#764ba215']}
+                  colors={['#dbeafe', '#bfdbfe']}
                   style={tw`rounded-2xl p-5 border border-blue-100`}
                 >
                   <View style={tw`flex-row items-center justify-between`}>
