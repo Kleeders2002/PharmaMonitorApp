@@ -1011,7 +1011,7 @@ const ConsultarMetricasScreen = () => {
                   </View>
                 </View>
               </View>
-            </View>
+            </Animated.View>
           </LinearGradient>
         </Animated.View>
 
@@ -1235,36 +1235,34 @@ const ConsultarMetricasScreen = () => {
                           </View>
                         </View>
 
-                        <View style={tw`items-center`}>
-                          <LineChart
-                            data={{
-                              labels: data
-                                .map((d) =>
-                                  format(new Date(d.fecha), 'HH:mm', { locale: es })
-                                )
-                                .filter((_, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0),
-                              datasets: [
-                                {
-                                  data: data.map((d) => d[selectedMetric]),
-                                  color: () => metricConfig[selectedMetric].chart,
-                                  strokeWidth: 3,
-                                },
-                              ],
-                            }}
-                            width={screenWidth - 60}
-                            height={220}
-                            chartConfig={chartConfig}
-                            bezier
-                            withInnerLines={true}
-                            withOuterLines={true}
-                            withVerticalLines={false}
-                            withHorizontalLines={true}
-                            style={{
-                              marginVertical: 8,
-                              borderRadius: 16,
-                            }}
-                          />
-                        </View>
+                        <LineChart
+                          data={{
+                            labels: data
+                              .map((d) =>
+                                format(new Date(d.fecha), 'HH:mm', { locale: es })
+                              )
+                              .filter((_, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0),
+                            datasets: [
+                              {
+                                data: data.map((d) => d[selectedMetric]),
+                                color: () => metricConfig[selectedMetric].chart,
+                                strokeWidth: 3,
+                              },
+                            ],
+                          }}
+                          width={screenWidth - 60}
+                          height={220}
+                          chartConfig={chartConfig}
+                          bezier
+                          withInnerLines={true}
+                          withOuterLines={true}
+                          withVerticalLines={false}
+                          withHorizontalLines={true}
+                          style={{
+                            marginVertical: 8,
+                            borderRadius: 16,
+                          }}
+                        />
 
                         <View style={tw`flex-row items-center justify-center mt-3`}>
                           <LiveIndicator />
