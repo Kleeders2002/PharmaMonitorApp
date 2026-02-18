@@ -18,6 +18,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
 import {
   Thermometer,
@@ -45,9 +46,9 @@ import Animated, {
   withSequence,
   withTiming,
   Easing,
+  FadeIn,
   FadeInDown,
   FadeInUp,
-  FadeIn,
   ZoomIn,
 } from 'react-native-reanimated';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -163,15 +164,19 @@ const ConsultarMetricasScreen = () => {
   const [dateRangeType, setDateRangeType] = useState<DateRangeType>('24h');
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 1));
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startHour, setStartHour] = useState<Date>(new Date(new Date().setHours(0, 0, 0, 0)));
+  const [endHour, setEndHour] = useState<Date>(new Date(new Date().setHours(23, 59, 59, 999)));
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showStartHourPicker, setShowStartHourPicker] = useState(false);
+  const [showEndHourPicker, setShowEndHourPicker] = useState(false);
   const [showDateFilterModal, setShowDateFilterModal] = useState(false);
 
   // Animation values
   const pulseAnim = useSharedValue(1);
 
   // Fetch products
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const response = await api.get('/productosmonitoreados/detalles');
       const productos = response.data;
@@ -189,10 +194,23 @@ const ConsultarMetricasScreen = () => {
       setError('Error al cargar productos monitoreados');
       console.error(err);
     }
-  };
+  }, [selectedProduct]);
+
+  // Filter data by date range and hour range
+  const filterDataByDateRange = useCallback((allData: MonitoringData[], start: Date, end: Date, startH: Date, endH: Date) => {
+    const startTimestamp = startOfDay(start).getTime() + (startH.getHours() * 3600000) + (startH.getMinutes() * 60000);
+    const endTimestamp = endOfDay(end).getTime() - ((23 - endH.getHours()) * 3600000) - ((59 - endH.getMinutes()) * 60000);
+
+    const filtered = allData.filter((d) => {
+      const dataTimestamp = new Date(d.fecha).getTime();
+      return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
+    });
+
+    setData(filtered);
+  }, []);
 
   // Fetch all monitoring data
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     if (!selectedProduct) return;
 
     try {
@@ -202,7 +220,7 @@ const ConsultarMetricasScreen = () => {
           new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
       );
       setAllData(sortedData);
-      filterDataByDateRange(sortedData, startDate, endDate);
+      filterDataByDateRange(sortedData, startDate, endDate, startHour, endHour);
       setError(null);
     } catch (err) {
       setError('Error al obtener datos de monitoreo');
@@ -210,20 +228,7 @@ const ConsultarMetricasScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Filter data by date range
-  const filterDataByDateRange = (allData: MonitoringData[], start: Date, end: Date) => {
-    const startTimestamp = startOfDay(start).getTime();
-    const endTimestamp = endOfDay(end).getTime();
-
-    const filtered = allData.filter((d) => {
-      const dataTimestamp = new Date(d.fecha).getTime();
-      return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
-    });
-
-    setData(filtered);
-  };
+  }, [selectedProduct, startDate, endDate, startHour, endHour, filterDataByDateRange]);
 
   // Handle date range type change
   const handleDateRangeChange = (range: DateRangeType) => {
@@ -249,42 +254,121 @@ const ConsultarMetricasScreen = () => {
     }
   };
 
-  // Apply date filter
+  // Apply date and hour filter
   useEffect(() => {
     if (allData.length > 0) {
-      filterDataByDateRange(allData, startDate, endDate);
+      filterDataByDateRange(allData, startDate, endDate, startHour, endHour);
     }
-  }, [startDate, endDate, allData]);
+  }, [startDate, endDate, startHour, endHour, allData, filterDataByDateRange]);
 
   // Handle stop monitoring
   const handleStopMonitoring = async () => {
-    if (!selectedProduct) return;
+    console.log('🔘 Botón DETENER presionado');
+    console.log('📦 selectedProduct:', selectedProduct);
+    console.log('📦 isStopping antes:', isStopping);
 
-    Alert.alert(
-      'Detener Monitoreo',
-      '¿Estás seguro de que deseas detener el monitoreo de este producto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Detener',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsStopping(true);
-              await api.patch(`/productosmonitoreados/${selectedProduct}/detener`);
-              await fetchProducts();
-              setSelectedProduct(null);
-              Alert.alert('Éxito', 'Monitoreo detenido correctamente');
-            } catch (err) {
-              setError('Error al detener el monitoreo');
-              Alert.alert('Error', 'No se pudo detener el monitoreo');
-            } finally {
-              setIsStopping(false);
+    if (!selectedProduct) {
+      console.log('❌ ERROR: No hay producto seleccionado');
+      Alert.alert('Error', 'No hay producto seleccionado');
+      return;
+    }
+
+    console.log('✅ Producto seleccionado válido, iniciando proceso...');
+
+    // Verificar si hay token antes de hacer la petición
+    const token = await AsyncStorage.getItem('access_token');
+    if (!token) {
+      console.log('❌ ERROR: No hay token de acceso');
+      Alert.alert(
+        'Error de Autenticación',
+        'No hay una sesión activa. Por favor, inicia sesión nuevamente.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
             }
-          },
-        },
-      ]
-    );
+          }
+        ]
+      );
+      return;
+    }
+
+    console.log('✅ Token encontrado:', token.substring(0, 20) + '...');
+
+    try {
+      setIsStopping(true);
+      console.log('⏳ isStopping establecido en true');
+      console.log('📡 Enviando petición PATCH a:', `/productosmonitoreados/${selectedProduct}/detener`);
+
+      const response = await api.patch(`/productosmonitoreados/${selectedProduct}/detener`);
+      console.log('✅ Respuesta recibida:', response.status);
+      console.log('✅ Datos:', response.data);
+
+      console.log('🔄 Recargando productos...');
+      await fetchProducts();
+
+      console.log('🧹 Limpiando estado...');
+      setSelectedProduct(null);
+      setData([]);
+      setAllData([]);
+
+      // Esperar un momento para que el estado se actualice
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log('🔄 Buscando siguiente producto activo...');
+      const productosResponse = await api.get('/productosmonitoreados/detalles');
+      const productos = productosResponse.data;
+      const active = productos.filter((p: ProductoMonitoreado) => !p.fecha_finalizacion_monitoreo);
+
+      console.log('📦 Productos activos restantes:', active.length);
+
+      if (active.length > 0) {
+        console.log('✅ Seleccionando siguiente producto:', active[0].id);
+        setSelectedProduct(active[0].id);
+      }
+
+      Alert.alert('Éxito', 'Monitoreo detenido correctamente');
+    } catch (err: any) {
+      console.error('❌ ERROR al detener monitoreo:', err);
+      console.error('❌ Mensaje:', err.message);
+      console.error('❌ Response:', err.response);
+      console.error('❌ Status:', err.response?.status);
+      console.error('❌ Data:', err.response?.data);
+
+      setError('Error al detener el monitoreo');
+
+      // Manejo específico para error 401
+      if (err.response?.status === 401) {
+        Alert.alert(
+          'Error de Autenticación',
+          'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Login' }],
+                });
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      Alert.alert(
+        'Error',
+        `No se pudo detener el monitoreo.\n\nStatus: ${err.response?.status || 'Sin respuesta'}\nMensaje: ${err.response?.data?.message || err.message || 'Error desconocido'}`
+      );
+    } finally {
+      console.log('🔄 Finalizando, isStopping = false');
+      setIsStopping(false);
+    }
   };
 
   // Refresh
@@ -293,7 +377,7 @@ const ConsultarMetricasScreen = () => {
     await fetchProducts();
     if (selectedProduct) await fetchAllData();
     setRefreshing(false);
-  }, [selectedProduct]);
+  }, [selectedProduct, fetchAllData, fetchProducts]);
 
   // Effects
   useEffect(() => {
@@ -308,7 +392,7 @@ const ConsultarMetricasScreen = () => {
       -1,
       false
     );
-  }, []);
+  }, [fetchProducts]);
 
   useEffect(() => {
     if (selectedProduct) {
@@ -316,7 +400,7 @@ const ConsultarMetricasScreen = () => {
       const interval = setInterval(fetchAllData, 5000);
       return () => clearInterval(interval);
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, fetchAllData]);
 
   // Date picker handlers
   const onStartDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -337,27 +421,46 @@ const ConsultarMetricasScreen = () => {
     }
   };
 
+  // Hour picker handlers
+  const onStartHourChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowStartHourPicker(false);
+    }
+    if (selectedTime) {
+      setStartHour(selectedTime);
+    }
+  };
+
+  const onEndHourChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowEndHourPicker(false);
+    }
+    if (selectedTime) {
+      setEndHour(selectedTime);
+    }
+  };
+
   // ============= DATE RANGE BUTTON =============
   const DateRangeButton = () => {
     return (
       <TouchableOpacity
         onPress={() => setShowDateFilterModal(true)}
-        style={tw`bg-white rounded-2xl shadow-lg border border-blue-100 p-4`}
+        style={tw`bg-white rounded-xl shadow-md border border-blue-100 p-3`}
       >
         <View style={tw`flex-row items-center justify-between`}>
           <View style={tw`flex-row items-center flex-1`}>
-            <View style={tw`bg-blue-100 p-2.5 rounded-xl mr-3`}>
-              <Filter width={20} height={20} stroke="#2563eb" strokeWidth={2} />
+            <View style={tw`bg-blue-100 p-2 rounded-lg mr-2.5`}>
+              <Filter width={18} height={18} stroke="#2563eb" strokeWidth={2} />
             </View>
             <View style={tw`flex-1`}>
-              <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Rango de fechas</Text>
-              <Text style={tw`text-sm font-bold text-gray-900`}>
-                {format(startDate, 'd MMM', { locale: es })} - {format(endDate, 'd MMM yyyy', { locale: es })}
+              <Text style={tw`text-[10px] text-gray-500 font-semibold mb-0.5`}>Rango de fechas y horas</Text>
+              <Text style={tw`text-xs font-bold text-gray-900`}>
+                {format(startDate, 'd MMM', { locale: es })} {format(startHour, 'HH:mm', { locale: es })} - {format(endDate, 'd MMM yyyy', { locale: es })} {format(endHour, 'HH:mm', { locale: es })}
               </Text>
             </View>
           </View>
-          <View style={tw`bg-blue-500 px-3 py-1.5 rounded-full`}>
-            <Text style={tw`text-white text-xs font-bold`}>
+          <View style={tw`bg-blue-500 px-2.5 py-1 rounded-full`}>
+            <Text style={tw`text-white text-[10px] font-bold`}>
               {data.length} datos
             </Text>
           </View>
@@ -375,7 +478,7 @@ const ConsultarMetricasScreen = () => {
         <View style={tw`bg-white rounded-t-3xl shadow-2xl`}>
           <View style={tw`p-5 border-b border-gray-100`}>
             <View style={tw`flex-row justify-between items-center`}>
-              <Text style={tw`text-xl font-bold text-gray-900`}>Filtrar por fechas</Text>
+              <Text style={tw`text-xl font-bold text-gray-900`}>Filtrar por fechas y horas</Text>
               <TouchableOpacity onPress={() => setShowDateFilterModal(false)}>
                 <View style={tw`bg-gray-100 p-2 rounded-full`}>
                   <X width={20} height={20} stroke="#6b7280" strokeWidth={2} />
@@ -417,31 +520,61 @@ const ConsultarMetricasScreen = () => {
             {/* Custom date range */}
             <Text style={tw`text-sm font-bold text-gray-700 mb-3`}>Rango personalizado</Text>
 
-            <TouchableOpacity
-              onPress={() => {
-                setDateRangeType('custom');
-                setShowStartDatePicker(true);
-              }}
-              style={tw`bg-gray-50 rounded-xl p-4 mb-3 border-2 border-gray-200`}
-            >
-              <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Desde</Text>
-              <Text style={tw`text-lg font-bold text-gray-900`}>
-                {format(startDate, 'd MMMM yyyy', { locale: es })}
-              </Text>
-            </TouchableOpacity>
+            <View style={tw`flex-row gap-3 mb-3`}>
+              <TouchableOpacity
+                onPress={() => {
+                  setDateRangeType('custom');
+                  setShowStartDatePicker(true);
+                }}
+                style={tw`flex-1 bg-gray-50 rounded-xl p-4 border-2 border-gray-200`}
+              >
+                <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Desde (fecha)</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>
+                  {format(startDate, 'd MMM', { locale: es })}
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                setDateRangeType('custom');
-                setShowEndDatePicker(true);
-              }}
-              style={tw`bg-gray-50 rounded-xl p-4 mb-4 border-2 border-gray-200`}
-            >
-              <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Hasta</Text>
-              <Text style={tw`text-lg font-bold text-gray-900`}>
-                {format(endDate, 'd MMMM yyyy', { locale: es })}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setDateRangeType('custom');
+                  setShowStartHourPicker(true);
+                }}
+                style={tw`flex-1 bg-blue-50 rounded-xl p-4 border-2 border-blue-200`}
+              >
+                <Text style={tw`text-xs text-blue-600 font-semibold mb-1`}>Desde (hora)</Text>
+                <Text style={tw`text-base font-bold text-blue-900`}>
+                  {format(startHour, 'HH:mm', { locale: es })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={tw`flex-row gap-3 mb-4`}>
+              <TouchableOpacity
+                onPress={() => {
+                  setDateRangeType('custom');
+                  setShowEndDatePicker(true);
+                }}
+                style={tw`flex-1 bg-gray-50 rounded-xl p-4 border-2 border-gray-200`}
+              >
+                <Text style={tw`text-xs text-gray-500 font-semibold mb-1`}>Hasta (fecha)</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>
+                  {format(endDate, 'd MMM yyyy', { locale: es })}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setDateRangeType('custom');
+                  setShowEndHourPicker(true);
+                }}
+                style={tw`flex-1 bg-blue-50 rounded-xl p-4 border-2 border-blue-200`}
+              >
+                <Text style={tw`text-xs text-blue-600 font-semibold mb-1`}>Hasta (hora)</Text>
+                <Text style={tw`text-base font-bold text-blue-900`}>
+                  {format(endHour, 'HH:mm', { locale: es })}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               onPress={() => setShowDateFilterModal(false)}
@@ -471,6 +604,27 @@ const ConsultarMetricasScreen = () => {
               onChange={onEndDateChange}
               minimumDate={startDate}
               maximumDate={new Date()}
+              style={tw`flex-1`}
+            />
+          )}
+
+          {/* Hour pickers */}
+          {showStartHourPicker && (
+            <DateTimePicker
+              value={startHour}
+              mode="time"
+              display="default"
+              onChange={onStartHourChange}
+              style={tw`flex-1`}
+            />
+          )}
+
+          {showEndHourPicker && (
+            <DateTimePicker
+              value={endHour}
+              mode="time"
+              display="default"
+              onChange={onEndHourChange}
               style={tw`flex-1`}
             />
           )}
@@ -510,7 +664,7 @@ const ConsultarMetricasScreen = () => {
         entering={FadeInUp.delay(
           metric === 'temperatura' ? 0 : metric === 'humedad' ? 100 : metric === 'lux' ? 200 : 300
         ).springify()}
-        style={tw`w-[48%] mb-3`}
+        style={tw`w-[48%] mb-2`}
       >
         <TouchableOpacity
           onPressIn={handlePressIn}
@@ -521,7 +675,7 @@ const ConsultarMetricasScreen = () => {
           <Animated.View style={animatedStyle}>
             <View
               style={[
-                tw`rounded-2xl shadow-lg overflow-hidden`,
+                tw`rounded-xl shadow-md overflow-hidden`,
                 selectedMetric === metric && tw`ring-2 ring-blue-500`,
                 isOutOfRange && tw`ring-2 ring-red-500`,
               ]}
@@ -530,43 +684,43 @@ const ConsultarMetricasScreen = () => {
                 colors={config.gradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={tw`p-4`}
+                style={tw`p-3`}
               >
-                <View style={tw`flex-row items-center justify-between mb-2`}>
+                <View style={tw`flex-row items-center justify-between mb-1.5`}>
                   <View style={tw`flex-row items-center`}>
-                    <View style={[tw`p-2 rounded-xl bg-white/30 shadow-sm`]}>
-                      <Icon width={18} height={18} stroke={config.text} strokeWidth={2.5} />
+                    <View style={[tw`p-1.5 rounded-lg bg-white/30 shadow-sm`]}>
+                      <Icon width={16} height={16} stroke={config.text} strokeWidth={2.5} />
                     </View>
-                    <Text style={tw`ml-2 font-bold text-gray-900 text-base`}>
+                    <Text style={tw`ml-1.5 font-bold text-gray-900 text-sm`}>
                       {config.label}
                     </Text>
                   </View>
                   {isOutOfRange && (
-                    <View style={tw`bg-red-500 px-2.5 py-1 rounded-full shadow-md`}>
-                      <Text style={tw`text-white text-xs font-bold`}>!</Text>
+                    <View style={tw`bg-red-500 px-2 py-0.5 rounded-full shadow-md`}>
+                      <Text style={tw`text-white text-[10px] font-bold`}>!</Text>
                     </View>
                   )}
                 </View>
 
-                <View style={tw`flex-row items-baseline mb-2`}>
-                  <Text style={tw`text-3xl font-extrabold text-gray-900`}>
+                <View style={tw`flex-row items-baseline mb-1.5`}>
+                  <Text style={tw`text-2xl font-extrabold text-gray-900`}>
                     {currentValue?.toFixed(1) || '0.0'}
                   </Text>
-                  <Text style={tw`text-gray-700 ml-1.5 text-base font-semibold`}>{config.unit}</Text>
+                  <Text style={tw`text-gray-700 ml-1 text-sm font-semibold`}>{config.unit}</Text>
                 </View>
 
-                <View style={tw`w-full bg-white/50 rounded-full h-2 mb-2`}>
+                <View style={tw`w-full bg-white/50 rounded-full h-1.5 mb-1.5`}>
                   <View
                     style={[
-                      tw`h-2 rounded-full shadow-sm`,
+                      tw`h-1.5 rounded-full shadow-sm`,
                       { width: `${progress}%`, backgroundColor: config.chart },
                     ]}
                   />
                 </View>
 
                 <View style={tw`flex-row justify-between`}>
-                  <Text style={tw`text-[10px] text-gray-600 font-medium`}>Mín: {min}</Text>
-                  <Text style={tw`text-[10px] text-gray-600 font-medium`}>Máx: {max}</Text>
+                  <Text style={tw`text-[9px] text-gray-600 font-medium`}>Mín: {min}</Text>
+                  <Text style={tw`text-[9px] text-gray-600 font-medium`}>Máx: {max}</Text>
                 </View>
               </LinearGradient>
             </View>
@@ -583,57 +737,57 @@ const ConsultarMetricasScreen = () => {
 
     return (
       <Animated.View entering={FadeInDown.springify()}>
-        <GlassCard style={tw`p-5 mb-5`}>
-          <View style={tw`flex-row mb-4`}>
+        <GlassCard style={tw`p-4 mb-4`}>
+          <View style={tw`flex-row mb-3`}>
             <View
               style={[
-                tw`w-24 h-24 rounded-2xl mr-4 shadow-lg`,
+                tw`w-20 h-20 rounded-xl mr-3 shadow-md`,
                 { backgroundColor: '#f3f4f6' },
               ]}
             >
               <Image
                 source={{ uri: product.foto_producto }}
-                style={tw`w-full h-full rounded-2xl`}
+                style={tw`w-full h-full rounded-xl`}
                 resizeMode="cover"
               />
             </View>
 
             <View style={tw`flex-1`}>
-              <Text style={tw`text-xl font-bold text-gray-900 mb-2`}>
+              <Text style={tw`text-lg font-bold text-gray-900 mb-2`}>
                 {product.nombre_producto}
               </Text>
 
               <View style={tw`flex-row items-center mb-1.5`}>
-                <View style={tw`bg-blue-100 p-1.5 rounded-lg mr-2`}>
-                  <Package width={16} height={16} stroke="#3b82f6" strokeWidth={2} />
+                <View style={tw`bg-blue-100 p-1 rounded-lg mr-2`}>
+                  <Package width={14} height={14} stroke="#3b82f6" strokeWidth={2} />
                 </View>
-                <Text style={tw`text-sm text-gray-700 font-medium`}>
+                <Text style={tw`text-xs text-gray-700 font-medium`}>
                   {product.cantidad} unidades
                 </Text>
               </View>
 
               <View style={tw`flex-row items-center mb-1.5`}>
-                <View style={tw`bg-green-100 p-1.5 rounded-lg mr-2`}>
-                  <MapPin width={16} height={16} stroke="#10b981" strokeWidth={2} />
+                <View style={tw`bg-green-100 p-1 rounded-lg mr-2`}>
+                  <MapPin width={14} height={14} stroke="#10b981" strokeWidth={2} />
                 </View>
-                <Text style={tw`text-sm text-gray-700 font-medium`}>
+                <Text style={tw`text-xs text-gray-700 font-medium`}>
                   {product.localizacion}
                 </Text>
               </View>
 
               <View style={tw`flex-row items-center`}>
-                <View style={tw`bg-blue-100 p-1.5 rounded-lg mr-2`}>
-                  <Calendar width={16} height={16} stroke="#3b82f6" strokeWidth={2} />
+                <View style={tw`bg-blue-100 p-1 rounded-lg mr-2`}>
+                  <Calendar width={14} height={14} stroke="#3b82f6" strokeWidth={2} />
                 </View>
-                <Text style={tw`text-sm text-gray-700 font-medium`}>
+                <Text style={tw`text-xs text-gray-700 font-medium`}>
                   {format(new Date(product.fecha_inicio_monitoreo), 'd MMM yyyy', { locale: es })}
                 </Text>
               </View>
             </View>
           </View>
 
-          <View style={tw`border-t border-gray-200 pt-4`}>
-            <Text style={tw`font-bold text-gray-800 mb-3`}>Especificaciones:</Text>
+          <View style={tw`border-t border-gray-200 pt-3`}>
+            <Text style={tw`text-sm font-bold text-gray-800 mb-2`}>Especificaciones:</Text>
             <SpecRow
               label="Temperatura"
               value={`${product.temperatura_min}°C - ${product.temperatura_max}°C`}
@@ -655,17 +809,6 @@ const ConsultarMetricasScreen = () => {
               color="#3b82f6"
             />
           </View>
-
-          <TouchableOpacity
-            style={tw`mt-4 bg-gradient-to-r from-blue-100 to-blue-200 p-3.5 rounded-xl flex-row items-center justify-center shadow-lg border-2 border-blue-300`}
-            onPress={() => {
-              // @ts-ignore
-              navigation.navigate('HistoricoMonitoreo', { productoId: product.id });
-            }}
-          >
-            <Clock width={18} height={18} stroke="#1e40af" strokeWidth={2} />
-            <Text style={tw`text-blue-900 font-bold ml-2 text-base`}>Ver Registro Completo</Text>
-          </TouchableOpacity>
         </GlassCard>
       </Animated.View>
     );
@@ -681,12 +824,12 @@ const ConsultarMetricasScreen = () => {
     value: string;
     color: string;
   }) => (
-    <View style={tw`flex-row justify-between items-center mb-2`}>
-      <Text style={tw`text-sm text-gray-600 font-medium`}>{label}:</Text>
+    <View style={tw`flex-row justify-between items-center mb-1.5`}>
+      <Text style={tw`text-xs text-gray-600 font-medium`}>{label}:</Text>
       <View
-        style={[tw`px-3 py-1 rounded-full`, { backgroundColor: `${color}15` }]}
+        style={[tw`px-2 py-0.5 rounded-full`, { backgroundColor: `${color}15` }]}
       >
-        <Text style={[tw`text-sm font-bold`, { color }]}>{value}</Text>
+        <Text style={[tw`text-xs font-bold`, { color }]}>{value}</Text>
       </View>
     </View>
   );
@@ -704,14 +847,15 @@ const ConsultarMetricasScreen = () => {
         entering={FadeInUp.delay(index * 100).springify()}
       >
         <TouchableOpacity
-          style={tw`bg-blue-50 rounded-2xl p-4 mb-3 shadow-md border border-blue-100`}
+          style={tw`bg-blue-50 rounded-xl p-3 mb-2 shadow-sm border border-blue-100`}
           onPress={() => {
-            // @ts-ignore
+            console.log('🔘 Botón HISTÓRICO desde tarjeta presionado');
+            console.log('📦 product.id:', product.id);
             navigation.navigate('HistoricoMonitoreo', { productoId: product.id });
           }}
         >
           <View style={tw`flex-row`}>
-            <View style={tw`w-20 h-20 rounded-xl overflow-hidden mr-4 shadow-sm`}>
+            <View style={tw`w-16 h-16 rounded-lg overflow-hidden mr-3 shadow-sm`}>
               <Image
                 source={{ uri: product.foto_producto }}
                 style={tw`w-full h-full`}
@@ -720,25 +864,25 @@ const ConsultarMetricasScreen = () => {
             </View>
 
             <View style={tw`flex-1`}>
-              <View style={tw`flex-row justify-between items-start mb-2`}>
-                <Text style={tw`font-bold text-gray-900 flex-1 mr-2`}>
+              <View style={tw`flex-row justify-between items-start mb-1.5`}>
+                <Text style={tw`font-bold text-gray-900 flex-1 mr-2 text-sm`}>
                   {product.nombre_producto}
                 </Text>
-                <View style={tw`bg-blue-200 px-2.5 py-1 rounded-full`}>
-                  <Text style={tw`text-blue-900 text-xs font-bold`}>Finalizado</Text>
+                <View style={tw`bg-blue-200 px-2 py-0.5 rounded-full`}>
+                  <Text style={tw`text-blue-900 text-[10px] font-bold`}>Finalizado</Text>
                 </View>
               </View>
 
               <View style={tw`flex-row items-center mb-1`}>
-                <MapPin width={14} height={14} stroke="#10b981" strokeWidth={2} />
-                <Text style={tw`text-xs text-gray-600 ml-1.5`}>
+                <MapPin width={12} height={12} stroke="#10b981" strokeWidth={2} />
+                <Text style={tw`text-[11px] text-gray-600 ml-1.5`}>
                   {product.localizacion}
                 </Text>
               </View>
 
               <View style={tw`flex-row items-center`}>
-                <Calendar width={14} height={14} stroke="#3b82f6" strokeWidth={2} />
-                <Text style={tw`text-xs text-gray-600 ml-1.5`}>
+                <Calendar width={12} height={12} stroke="#3b82f6" strokeWidth={2} />
+                <Text style={tw`text-[11px] text-gray-600 ml-1.5`}>
                   {format(new Date(product.fecha_inicio_monitoreo), 'dd MMM yyyy', { locale: es })} -{' '}
                   {product.fecha_finalizacion_monitoreo
                     ? format(new Date(product.fecha_finalizacion_monitoreo), 'dd MMM yyyy', {
@@ -751,14 +895,15 @@ const ConsultarMetricasScreen = () => {
           </View>
 
           <TouchableOpacity
-            style={tw`mt-3 bg-gray-50 p-2.5 rounded-lg flex-row items-center justify-center`}
+            style={tw`mt-2 bg-gray-50 p-2 rounded-lg flex-row items-center justify-center`}
             onPress={() => {
-              // @ts-ignore
+              console.log('🔘 Botón HISTÓRICO "Ver Detalles" presionado');
+              console.log('📦 product.id:', product.id);
               navigation.navigate('HistoricoMonitoreo', { productoId: product.id });
             }}
           >
-            <Clock width={16} height={16} stroke="#6b7280" strokeWidth={2} />
-            <Text style={tw`text-gray-700 font-semibold ml-2`}>Ver Detalles</Text>
+            <Clock width={14} height={14} stroke="#6b7280" strokeWidth={2} />
+            <Text style={tw`text-gray-700 font-semibold ml-1.5 text-xs`}>Ver Detalles</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </Animated.View>
@@ -866,8 +1011,8 @@ const ConsultarMetricasScreen = () => {
       borderRadius: 16,
     },
     propsForDots: {
-      r: '4',
-      strokeWidth: '2',
+      r: '3',
+      strokeWidth: '1.5',
       stroke: metricConfig[selectedMetric].chart,
     },
     propsForBackgroundLines: {
@@ -875,6 +1020,8 @@ const ConsultarMetricasScreen = () => {
       stroke: '#e5e7eb',
       strokeWidth: '1',
     },
+    fillShadowGradient: metricConfig[selectedMetric].chart,
+    fillShadowGradientOpacity: 0.1,
   };
 
   // ============= MAIN RENDER =============
@@ -891,52 +1038,52 @@ const ConsultarMetricasScreen = () => {
             colors={['#3b82f6', '#2563eb', '#06b6d4']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={tw`px-5 pt-8 pb-6`}
+            style={tw`px-5 pt-6 pb-5`}
           >
             <Animated.View
               entering={FadeInUp.delay(100).springify()}
-              style={tw`mb-5`}
+              style={tw`mb-4`}
             >
-              <Text style={tw`text-white text-3xl font-bold mb-2`}>
+              <Text style={tw`text-white text-2xl font-bold mb-1`}>
                 Monitor Ambiental
               </Text>
-              <Text style={tw`text-white/80 text-base`}>
+              <Text style={tw`text-white/80 text-sm`}>
                 Monitoreo inteligente en tiempo real
               </Text>
             </Animated.View>
 
             {/* Animated Tab Switcher */}
-            <View style={tw`bg-white/20 backdrop-blur-sm rounded-2xl p-1.5`}>
+            <View style={tw`bg-white/20 backdrop-blur-sm rounded-xl p-1`}>
               <View style={tw`flex-row`}>
                 <TouchableOpacity
                   onPress={() => setTabValue(0)}
                   style={tw.style(
-                    `flex-1 py-3 rounded-xl flex-row items-center justify-center`,
-                    tabValue === 0 ? `bg-white shadow-lg` : ``
+                    `flex-1 py-2.5 rounded-lg flex-row items-center justify-center`,
+                    tabValue === 0 ? `bg-white shadow-md` : ``
                   )}
                   activeOpacity={0.9}
                 >
                   <View style={tw`flex-row items-center`}>
                     <View style={tw.style(
-                      `p-1.5 rounded-lg`,
+                      `p-1 rounded-lg`,
                       tabValue === 0 ? `bg-blue-500` : `bg-transparent`
                     )}>
                       <Box
-                        width={18}
-                        height={18}
+                        width={16}
+                        height={16}
                         stroke={tabValue === 0 ? '#ffffff' : '#ffffff80'}
                         strokeWidth={2.5}
                       />
                     </View>
                     <Text
                       style={tw.style(
-                        `ml-2 font-bold text-base`,
-                        tabValue === 0 ? `text-blue-900 font-semibold` : `text-blue-900 font-semibold`
+                        `ml-1.5 font-bold text-sm`,
+                        tabValue === 0 ? `text-blue-900` : `text-white`
                       )}
                     >
                       Activos
                     </Text>
-                    <View style={tw`ml-2 bg-white px-2.5 py-1 rounded-full shadow-sm`}>
+                    <View style={tw`ml-1.5 bg-white px-2 py-0.5 rounded-full shadow-sm`}>
                       <Text style={tw`text-blue-900 text-xs font-bold`}>
                         {activeProducts.length}
                       </Text>
@@ -948,32 +1095,32 @@ const ConsultarMetricasScreen = () => {
                 <TouchableOpacity
                   onPress={() => setTabValue(1)}
                   style={tw.style(
-                    `flex-1 py-3 rounded-xl flex-row items-center justify-center`,
-                    tabValue === 1 ? `bg-blue-100 shadow-lg border-2 border-blue-300` : `bg-blue-50`
+                    `flex-1 py-2.5 rounded-lg flex-row items-center justify-center`,
+                    tabValue === 1 ? `bg-blue-100 shadow-md border border-blue-300` : `bg-transparent`
                   )}
                   activeOpacity={0.9}
                 >
                   <View style={tw`flex-row items-center`}>
                     <View style={tw.style(
-                      `p-1.5 rounded-lg`,
-                      tabValue === 1 ? `bg-blue-500` : `bg-blue-200`
+                      `p-1 rounded-lg`,
+                      tabValue === 1 ? `bg-blue-500` : `bg-transparent`
                     )}>
                       <Archive
-                        width={18}
-                        height={18}
-                        stroke={tabValue === 1 ? '#ffffff' : '#1e40af'}
+                        width={16}
+                        height={16}
+                        stroke={tabValue === 1 ? '#ffffff' : '#ffffff80'}
                         strokeWidth={2.5}
                       />
                     </View>
                     <Text
                       style={tw.style(
-                        `ml-2 font-bold text-base`,
-                        tabValue === 1 ? `text-blue-900 font-semibold` : `text-blue-900 font-semibold`
+                        `ml-1.5 font-bold text-sm`,
+                        tabValue === 1 ? `text-blue-900` : `text-white`
                       )}
                     >
                       Históricos
                     </Text>
-                    <View style={tw`ml-2 bg-white px-2.5 py-1 rounded-full shadow-sm`}>
+                    <View style={tw`ml-1.5 bg-white px-2 py-0.5 rounded-full shadow-sm`}>
                       <Text style={tw`text-blue-900 text-xs font-bold`}>
                         {historicalProducts.length}
                       </Text>
@@ -986,28 +1133,28 @@ const ConsultarMetricasScreen = () => {
             {/* Quick Stats */}
             <Animated.View
               entering={FadeInUp.delay(200).springify()}
-              style={tw`flex-row gap-3 mt-4`}
+              style={tw`flex-row gap-2 mt-3`}
             >
-              <View style={tw`flex-1 bg-blue-50 backdrop-blur-sm rounded-xl p-3`}>
+              <View style={tw`flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2.5`}>
                 <View style={tw`flex-row items-center`}>
-                  <View style={tw`bg-blue-200 p-2 rounded-lg`}>
-                    <Activity width={16} height={16} stroke="#1e40af" strokeWidth={2.5} />
+                  <View style={tw`bg-blue-200/50 p-1.5 rounded-lg`}>
+                    <Activity width={14} height={14} stroke="#ffffff" strokeWidth={2.5} />
                   </View>
                   <View style={tw`ml-2`}>
-                    <Text style={tw`text-blue-900 text-xs font-semibold`}>En Monitoreo</Text>
-                    <Text style={tw`text-blue-900 text-xl font-bold`}>{activeProducts.length}</Text>
+                    <Text style={tw`text-white/70 text-xs`}>En Monitoreo</Text>
+                    <Text style={tw`text-white text-lg font-bold`}>{activeProducts.length}</Text>
                   </View>
                 </View>
               </View>
 
-              <View style={tw`flex-1 bg-white/20 backdrop-blur-sm rounded-xl p-3`}>
+              <View style={tw`flex-1 bg-white/10 backdrop-blur-sm rounded-lg p-2.5`}>
                 <View style={tw`flex-row items-center`}>
-                  <View style={tw`bg-white/30 p-2 rounded-lg`}>
-                    <AlertTriangle width={16} height={16} stroke="#ffffff" strokeWidth={2.5} />
+                  <View style={tw`bg-white/20 p-1.5 rounded-lg`}>
+                    <AlertTriangle width={14} height={14} stroke="#ffffff" strokeWidth={2.5} />
                   </View>
                   <View style={tw`ml-2`}>
                     <Text style={tw`text-white/70 text-xs`}>Alertas</Text>
-                    <Text style={tw`text-white text-xl font-bold`}>0</Text>
+                    <Text style={tw`text-white text-lg font-bold`}>0</Text>
                   </View>
                 </View>
               </View>
@@ -1018,7 +1165,7 @@ const ConsultarMetricasScreen = () => {
         {/* Content */}
         <ScrollView
           style={tw`flex-1 bg-gray-50`}
-          contentContainerStyle={tw`p-4`}
+          contentContainerStyle={tw`p-3 pb-6`}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -1044,27 +1191,27 @@ const ConsultarMetricasScreen = () => {
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={tw`rounded-3xl p-5 shadow-xl border border-white/20`}
+                    style={tw`rounded-2xl p-4 shadow-lg border border-white/20`}
                   >
                     <View style={tw`flex-row items-center justify-between`}>
                       <View style={tw`flex-row items-center flex-1`}>
                         <View
                           style={tw.style(
-                            `p-3 rounded-2xl`,
+                            `p-2.5 rounded-xl`,
                             selectedProduct ? `bg-white/20` : `bg-white`
                           )}
                         >
                           <Box
-                            width={26}
-                            height={26}
+                            width={22}
+                            height={22}
                             stroke={selectedProduct ? '#ffffff' : '#6b7280'}
                             strokeWidth={2}
                           />
                         </View>
-                        <View style={tw`ml-4 flex-1`}>
+                        <View style={tw`ml-3 flex-1`}>
                           <Text
                             style={tw.style(
-                              `font-bold text-lg`,
+                              `font-bold text-base`,
                               selectedProduct ? `text-white` : `text-gray-800`
                             )}
                           >
@@ -1074,7 +1221,7 @@ const ConsultarMetricasScreen = () => {
                           </Text>
                           <Text
                             style={tw.style(
-                              `text-sm mt-0.5`,
+                              `text-xs mt-0.5`,
                               selectedProduct ? `text-white/70` : `text-gray-500`
                             )}
                           >
@@ -1086,13 +1233,13 @@ const ConsultarMetricasScreen = () => {
                       </View>
                       <View
                         style={tw.style(
-                          `p-2.5 rounded-xl`,
+                          `p-2 rounded-lg`,
                           selectedProduct ? `bg-white/20` : `bg-white/50`
                         )}
                       >
                         <ChevronDown
-                          width={24}
-                          height={24}
+                          width={20}
+                          height={20}
                           stroke={selectedProduct ? '#ffffff' : '#6b7280'}
                           strokeWidth={2.5}
                         />
@@ -1103,7 +1250,7 @@ const ConsultarMetricasScreen = () => {
               </Animated.View>
 
               {/* Premium Action Buttons */}
-              <Animated.View entering={FadeInUp.delay(200).springify()} style={tw`flex-row gap-3 mb-5`}>
+              <Animated.View entering={FadeInUp.delay(200).springify()} style={tw`flex-row gap-2 mt-3 mb-3`}>
                 <TouchableOpacity
                   onPress={handleStopMonitoring}
                   disabled={!selectedProduct || isStopping}
@@ -1118,10 +1265,10 @@ const ConsultarMetricasScreen = () => {
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={tw`rounded-2xl p-4 shadow-lg flex-row items-center justify-center`}
+                    style={tw`rounded-xl p-3 shadow-md flex-row items-center justify-center`}
                   >
-                    <StopCircle width={22} height={22} stroke="#ffffff" strokeWidth={2} />
-                    <Text style={tw`text-white font-bold ml-2 text-base`}>
+                    <StopCircle width={18} height={18} stroke="#ffffff" strokeWidth={2} />
+                    <Text style={tw`text-white font-bold ml-1.5 text-sm`}>
                       {isStopping ? 'Deteniendo...' : 'Detener'}
                     </Text>
                   </LinearGradient>
@@ -1129,8 +1276,15 @@ const ConsultarMetricasScreen = () => {
 
                 <TouchableOpacity
                   onPress={() => {
-                    // @ts-ignore
-                    navigation.navigate('HistoricoMonitoreo', { productoId: selectedProduct });
+                    console.log('🔘 Botón HISTÓRICO presionado');
+                    console.log('📦 selectedProduct:', selectedProduct);
+                    if (selectedProduct) {
+                      console.log('✅ Navegando a HistoricoMonitoreo con productoId:', selectedProduct);
+                      navigation.navigate('HistoricoMonitoreo', { productoId: selectedProduct });
+                    } else {
+                      console.log('❌ ERROR: No hay producto seleccionado');
+                      Alert.alert('Error', 'Por favor selecciona un producto primero');
+                    }
                   }}
                   disabled={!selectedProduct}
                   style={tw`flex-1`}
@@ -1144,10 +1298,10 @@ const ConsultarMetricasScreen = () => {
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={tw`rounded-2xl p-4 shadow-lg flex-row items-center justify-center`}
+                    style={tw`rounded-xl p-3 shadow-md flex-row items-center justify-center`}
                   >
-                    <Clock width={22} height={22} stroke="#ffffff" strokeWidth={2} />
-                    <Text style={tw`text-white font-bold ml-2 text-base`}>Histórico</Text>
+                    <Clock width={18} height={18} stroke="#ffffff" strokeWidth={2} />
+                    <Text style={tw`text-white font-bold ml-1.5 text-sm`}>Histórico</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </Animated.View>
@@ -1195,10 +1349,10 @@ const ConsultarMetricasScreen = () => {
                   </Animated.View>
 
                   {/* Metrics Cards */}
-                  <View style={tw`mb-4`}>
+                  <View style={tw`mb-3`}>
                     <Animated.Text
                       entering={FadeInDown.springify()}
-                      style={tw`text-base font-bold mb-3 text-gray-900`}
+                      style={tw`text-sm font-bold mb-2 text-gray-900`}
                     >
                       Métricas en tiempo real
                     </Animated.Text>
@@ -1213,20 +1367,20 @@ const ConsultarMetricasScreen = () => {
                   {/* Chart */}
                   {data.length > 0 ? (
                     <Animated.View entering={FadeInUp.springify()}>
-                      <GlassCard style={tw`p-5 mb-5`}>
-                        <View style={tw`flex-row items-center justify-between mb-4`}>
-                          <Text style={tw`text-lg font-bold text-gray-900`}>
+                      <GlassCard style={tw`p-4 mb-3`}>
+                        <View style={tw`flex-row items-center justify-between mb-3`}>
+                          <Text style={tw`text-base font-bold text-gray-900`}>
                             Evolución de {metricConfig[selectedMetric].label}
                           </Text>
                           <View
                             style={[
-                              tw`px-3 py-1 rounded-full`,
+                              tw`px-2.5 py-1 rounded-full`,
                               { backgroundColor: metricConfig[selectedMetric].bg },
                             ]}
                           >
                             <Text
                               style={[
-                                tw`text-sm font-bold`,
+                                tw`text-xs font-bold`,
                                 { color: metricConfig[selectedMetric].text },
                               ]}
                             >
@@ -1235,36 +1389,40 @@ const ConsultarMetricasScreen = () => {
                           </View>
                         </View>
 
-                        <LineChart
-                          data={{
-                            labels: data
-                              .map((d) =>
-                                format(new Date(d.fecha), 'HH:mm', { locale: es })
-                              )
-                              .filter((_, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0),
-                            datasets: [
-                              {
-                                data: data.map((d) => d[selectedMetric]),
-                                color: () => metricConfig[selectedMetric].chart,
-                                strokeWidth: 3,
-                              },
-                            ],
-                          }}
-                          width={screenWidth - 60}
-                          height={220}
-                          chartConfig={chartConfig}
-                          bezier
-                          withInnerLines={true}
-                          withOuterLines={true}
-                          withVerticalLines={false}
-                          withHorizontalLines={true}
-                          style={{
-                            marginVertical: 8,
-                            borderRadius: 16,
-                          }}
-                        />
+                        <View style={tw`items-center`}>
+                          <LineChart
+                            data={{
+                              labels: data
+                                .map((d) =>
+                                  format(new Date(d.fecha), 'HH:mm', { locale: es })
+                                ),
+                              datasets: [
+                                {
+                                  data: data.map((d) => d[selectedMetric]),
+                                  color: () => metricConfig[selectedMetric].chart,
+                                  strokeWidth: 2.5,
+                                },
+                              ],
+                            }}
+                            width={screenWidth - 62}
+                            height={220}
+                            chartConfig={chartConfig}
+                            bezier
+                            withInnerLines={true}
+                            withOuterLines={true}
+                            withVerticalLines={false}
+                            withHorizontalLines={true}
+                            withDots={true}
+                            segments={5}
+                            style={{
+                              marginVertical: 6,
+                              borderRadius: 16,
+                            }}
+                            formatYLabel={(yLabel) => parseFloat(yLabel).toFixed(1)}
+                          />
+                        </View>
 
-                        <View style={tw`flex-row items-center justify-center mt-3`}>
+                        <View style={tw`flex-row items-center justify-center mt-2`}>
                           <LiveIndicator />
                           <Text style={tw`text-xs text-gray-500 font-medium`}>
                             Última actualización:{' '}
@@ -1274,9 +1432,9 @@ const ConsultarMetricasScreen = () => {
                       </GlassCard>
                     </Animated.View>
                   ) : (
-                    <GlassCard style={tw`p-8 items-center justify-center`}>
+                    <GlassCard style={tw`p-6 items-center justify-center mb-3`}>
                       <ActivityIndicator size="large" color="#3b82f6" />
-                      <Text style={tw`text-gray-600 mt-4 font-medium`}>
+                      <Text style={tw`text-gray-600 mt-3 font-medium text-sm`}>
                         Cargando datos...
                       </Text>
                     </GlassCard>
@@ -1287,21 +1445,21 @@ const ConsultarMetricasScreen = () => {
           ) : (
             <Animated.View entering={FadeIn.springify()}>
               {/* Historical Header */}
-              <Animated.View entering={FadeInUp.springify()} style={tw`mb-6`}>
+              <Animated.View entering={FadeInUp.springify()} style={tw`mb-4`}>
                 <LinearGradient
                   colors={['#dbeafe', '#bfdbfe']}
-                  style={tw`rounded-2xl p-5 border border-blue-100`}
+                  style={tw`rounded-xl p-4 border border-blue-100`}
                 >
                   <View style={tw`flex-row items-center justify-between`}>
                     <View style={tw`flex-row items-center`}>
-                      <View style={tw`bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl`}>
-                        <Archive width={24} height={24} stroke="#ffffff" strokeWidth={2} />
+                      <View style={tw`bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 rounded-xl`}>
+                        <Archive width={20} height={20} stroke="#ffffff" strokeWidth={2} />
                       </View>
-                      <View style={tw`ml-4`}>
-                        <Text style={tw`text-xl font-bold text-gray-900`}>
+                      <View style={tw`ml-3`}>
+                        <Text style={tw`text-base font-bold text-gray-900`}>
                           Monitoreos Históricos
                         </Text>
-                        <Text style={tw`text-gray-500 text-sm mt-0.5`}>
+                        <Text style={tw`text-gray-500 text-xs mt-0.5`}>
                           {historicalProducts.length} registro{historicalProducts.length !== 1 ? 's' : ''} finalizado{historicalProducts.length !== 1 ? 's' : ''}
                         </Text>
                       </View>

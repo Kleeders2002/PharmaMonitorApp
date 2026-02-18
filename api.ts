@@ -51,23 +51,20 @@ api.interceptors.request.use(
     if (config.url === '/silent-renew' || config.url === '/refresh-token') {
       const refreshToken = await AsyncStorage.getItem('refresh_token');
       if (refreshToken) {
-        // En React Native necesitamos simular las cookies del navegador
         config.headers = config.headers || {};
-        // Añadir como cookie en el header
-        config.headers.Cookie = `refresh_token=Bearer ${refreshToken}`;
+        // En web NO podemos usar Cookie, solo Authorization
+        config.headers.Authorization = `Bearer ${refreshToken}`;
       }
     } else {
       // Para el resto de solicitudes, usar el token de acceso
       const accessToken = await AsyncStorage.getItem('access_token');
       if (accessToken) {
         config.headers = config.headers || {};
-        // Implementación dual para compatibilidad con el backend
+        // Usar Authorization header (funciona tanto en web como en móvil)
         config.headers.Authorization = `Bearer ${accessToken}`;
-        // También enviar como cookie para endpoints que esperan cookies
-        config.headers.Cookie = `access_token=Bearer ${accessToken}`;
       }
     }
-    
+
     return config;
   },
   error => Promise.reject(error)
@@ -82,71 +79,92 @@ api.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    
+
+    console.log('🔴 Error en interceptor de respuesta:', error.response?.status);
+    console.log('🔴 URL:', error.config?.url);
+    console.log('🔴 Método:', error.config?.method);
+
     if (!originalRequest) {
+      console.log('❌ No hay originalRequest');
       return Promise.reject(error);
     }
 
     // Si no es error de autenticación o ya intentamos el retry, rechazar
     if (error.response?.status !== 401 || originalRequest._retry) {
+      console.log('⚠️ No es 401 o ya se intentó retry, rechazando');
       return Promise.reject(error);
     }
+
+    console.log('🔄 Error 401 detectado, intentando refrescar token...');
 
     // Marcar como retry para evitar loops infinitos
     originalRequest._retry = true;
 
     // Si ya estamos refrescando, añadir a la cola
     if (isRefreshing) {
+      console.log('⏳ Ya se está refrescando, añadiendo a la cola');
       return new Promise((resolve, reject) => {
         failedQueue.push({ config: originalRequest, resolve, reject });
       });
     }
 
     isRefreshing = true;
+    console.log('🔄 Iniciando refresh de token...');
 
     try {
       // Intenta hacer el silent-renew
+      console.log('📡 Enviando petición a /silent-renew');
       const response = await api.post('/silent-renew');
-      
+      console.log('✅ Respuesta de silent-renew:', response.status);
+
       // Extraer tokens de la respuesta
       const { access_token, refresh_token } = response.data;
-      
+
       if (access_token && refresh_token) {
         await AsyncStorage.multiSet([
           ['access_token', access_token],
           ['refresh_token', refresh_token]
         ]);
+        console.log('✅ Tokens guardados correctamente');
       }
 
       // Procesar cola de solicitudes pendientes
       processQueue(null, access_token);
-      
+
       // Reintentar la solicitud original
+      console.log('🔄 Reintentando solicitud original...');
       return api(originalRequest);
     } catch (refreshError) {
+      console.error('❌ Error al refrescar token:', refreshError);
+
       // Limpiar tokens y navegar a Login
       await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user']);
-      
+      console.log('🧹 Tokens eliminados');
+
       // Navegar a Login (requiere inyección de navigation)
       if (navigationRef?.isReady()) {
+        console.log('✅ Navegando a Login...');
         navigationRef.dispatch(
           CommonActions.reset({
             index: 0,
             routes: [{ name: 'Login' }],
           })
         );
-        
+
         Alert.alert(
           'Sesión expirada',
           'Tu sesión ha caducado, por favor inicia sesión nuevamente',
           [{ text: 'OK', onPress: () => {} }]
         );
+      } else {
+        console.log('⚠️ navigationRef no está listo');
       }
-      
+
       processQueue(error as AxiosError);
       return Promise.reject(error);
     } finally {
       isRefreshing = false;
+      console.log('✅ Proceso de refresh finalizado');
     }
   }
 );

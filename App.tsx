@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { StatusBar } from 'react-native';
 import { NetworkProvider } from './src/core/application/NetworkMonitor';
 import AppNavigator from './src/presentation/navigation/AppNavigator';
 import GlobalNetworkStatus from './src/presentation/components/GlobalNetworkStatus';
@@ -33,7 +34,9 @@ export default function App() {
   }, []);
 
   return (
-    <NetworkProvider>
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#3b82f6" />
+      <NetworkProvider>
       <UserProvider>
         <ProductosProvider>
           <CondicionesProvider>
@@ -51,5 +54,6 @@ export default function App() {
         </ProductosProvider>
       </UserProvider>
     </NetworkProvider>
+    </>
   );
 }

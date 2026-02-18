@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
-  Image, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Image,
   ScrollView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  StatusBar
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNetwork } from '../../core/application/NetworkMonitor';
@@ -187,17 +188,19 @@ const LoginScreen = () => {
   };
 
   return (
-    <LinearGradient
-      colors={["#f0f9ff", "#e0f2fe"]}
-      style={tw`flex-1`}
-    >
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#2563eb" />
+      <LinearGradient
+        colors={["#f0f9ff", "#e0f2fe"]}
+        style={tw`flex-1`}
+      >
       <ScrollView 
         contentContainerStyle={tw`flex-grow justify-center px-4`}
         keyboardShouldPersistTaps="handled"
       >
         <View style={tw`bg-white rounded-3xl shadow-xl shadow-blue-100/50 overflow-hidden`}>
           {/* Header Section */}
-          {Platform.OS === "web" && (
+          {Platform.OS === "web" ? (
             <LinearGradient
               colors={["#2563eb", "#0284c7"]}
               style={tw`h-56 justify-center items-center pb-8`}
@@ -212,20 +215,22 @@ const LoginScreen = () => {
                 Sistema Integral de Monitoreo Farmacéutico
               </Text>
             </LinearGradient>
+          ) : (
+            <LinearGradient
+              colors={["#2563eb", "#0284c7"]}
+              style={tw`h-40 justify-center items-center pt-8`}
+            >
+              <Image
+                source={require("../../../assets/logoinverse.png")}
+                style={tw`w-20 h-20`}
+                resizeMode="contain"
+              />
+              <Text style={tw`text-white text-2xl font-bold tracking-tight mt-3`}>PharmaMonitor</Text>
+            </LinearGradient>
           )}
 
           <View style={tw`p-8`}>
             <View style={tw`items-center mb-10`}>
-              {Platform.OS !== "web" && (
-                <View style={tw`mb-6`}>
-                  <Image
-                    source={require("../../../assets/logoinverse.png")}
-                    style={tw`w-20 h-20`}
-                    resizeMode="contain"
-                  />
-                </View>
-              )}
-              
               <Text style={tw`text-3xl font-bold text-gray-900 mb-3`}>
                 {showForgotPassword ? "Recuperar Acceso" : "Bienvenido"}
               </Text>
@@ -368,6 +373,7 @@ const LoginScreen = () => {
         </View>
       </ScrollView>
     </LinearGradient>
+    </>
   );
 };
 
